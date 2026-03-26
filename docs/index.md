@@ -25,10 +25,10 @@ features:
     details: Built from the ground up in TypeScript. Every method, option, and return value has precise types — no <code>any</code> escape hatches.
   - icon: 📦
     title: Zero Dependencies
-    details: Ships ESM + UMD + type declarations with zero external packages. ~40 KB unminified — everything included.
+    details: Ships ESM + UMD + CJS + IIFE with type declarations. Zero external packages. ~50 KB unminified — everything included.
   - icon: 🕐
-    title: 80+ Methods
-    details: Format, parse, compare, diff, age, countdown, calendar grid, fiscal year, ISO weeks, ordinals, and dozens of is‑checks.
+    title: 100+ Methods
+    details: Format, parse, compare, diff, age, countdown, calendar grid, fiscal year, ISO weeks, ordinals, unit aliases, and dozens of is‑checks.
   - icon: 🌍
     title: Timezone Support
     details: Full IANA timezone support using the built-in Intl API. Offsets, DST detection, and wall-clock formatting.
@@ -40,13 +40,13 @@ features:
     details: Parse 5-field cron expressions, find next/previous matches, list matches between dates, and humanize to English.
   - icon: 🗣️
     title: Natural Language Parsing
-    details: Parse phrases like "tomorrow", "in 3 days", "last Friday", "3rd Monday of January", and "end of month".
+    details: Parse "tomorrow at 3pm", "5 hours ago", "next Friday", "3rd Monday of January", "noon", "midnight", and more.
   - icon: 📅
     title: Ranges & Collections
-    details: DateRange with contains/overlaps/merge/split/iterate. DateCollection with sort/group/unique/closest/filter.
+    details: DateRange with contains/overlaps/merge/split/iterate. DateCollection with sort/group/unique/closest/filter/reduce — fully iterable.
   - icon: ⏱️
     title: Duration
-    details: Parse durations from strings like "2h30m", convert between units, format with templates, and humanize.
+    details: Parse durations from "2h30m" or ISO 8601 "P1DT12H". Convert units, compare, format with templates, and humanize.
   - icon: 🔌
     title: Plugin System
     details: Extend DateFormat with custom methods through a lightweight plugin API. Type-safe declaration merging included.
@@ -70,20 +70,33 @@ features:
 ## Quick Example
 
 ```typescript
-import d8, { Timezone, Cron } from '@anilkumarthakur/d8'
+import d8, { Timezone, Cron, Duration } from '@anilkumarthakur/d8'
 
 const date = d8('2026-03-18')
-date.format('dddd, MMMM Do YYYY')       // "Wednesday, March 18th 2026"
-date.add(7, 'day').format('YYYY-MM-DD') // "2026-03-25"
-date.isWeekday()                         // true
-date.countdown().humanize()              // "5 days, 8 hours"
+date.format('[It is] dddd, MMMM Do YYYY')  // "It is Wednesday, March 18th 2026"
+date.add(7, 'd').format('YYYY-MM-DD')      // "2026-03-25" (unit aliases!)
+date.isSameOrBefore('2026-12-31')           // true
+date.isBetween('2026-01-01', '2026-06-30', undefined, '[]')  // inclusive
 
+// Create from object
+d8.fromObject({ year: 2026, month: 3, day: 18 })
+
+// Timezones
 const tz = new Timezone('America/New_York')
-tz.format(date, 'HH:mm Z')              // "19:00 -05:00"
+tz.format(date, 'HH:mm Z')                 // "19:00 -05:00"
 
+// Cron & Duration
 const job = new Cron('30 9 * * 1-5')
-job.humanize()                           // "At 09:30, Monday through Friday"
+job.humanize()                              // "At 09:30, Monday through Friday"
+Duration.fromISO('P1DT12H').humanize(false) // "1 day, 12 hours"
 
-d8.natural('next friday').format('YYYY-MM-DD')
+// Natural language with time support
+d8.natural('tomorrow at 3pm').format('YYYY-MM-DD HH:mm')
+d8.natural('5 hours ago')
 d8.business.getHolidays('US', 2026)
+
+// Iterable collections
+for (const date of d8.collection(['2026-01-01', '2026-06-15'])) {
+  console.log(date.format('MMM D'))
+}
 ```

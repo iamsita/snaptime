@@ -50,6 +50,10 @@ Register locale data and/or switch the active locale.
 
 Register a plugin function. Returns the class for chaining.
 
+### `DateFormat.fromObject(obj: DateObject, opts?): DateFormat`
+
+Create a `DateFormat` from a plain object with date components: `{ year, month, day, hour, minute, second, millisecond }`.
+
 ---
 
 ## Instance Methods — Formatting
@@ -134,9 +138,37 @@ Deep copy.
 
 ### `isBefore(other): boolean`
 ### `isAfter(other): boolean`
-### `isSame(other): boolean`
-### `isBetween(a, b): boolean`
-Exclusive: `a < this < b`.
+### `isSame(other: DateInput, unit?: UnitInput): boolean`
+
+Compare equality, optionally at a given unit granularity.
+
+### `isSameOrBefore(other: DateInput, unit?: UnitInput): boolean`
+
+Returns `true` if this date is the same as or before `other`, optionally at a given unit granularity.
+
+### `isSameOrAfter(other: DateInput, unit?: UnitInput): boolean`
+
+Returns `true` if this date is the same as or after `other`, optionally at a given unit granularity.
+
+### `isBetween(a: DateInput, b: DateInput, unit?: UnitInput, inclusivity?: Inclusivity): boolean`
+
+Check if this date is between `a` and `b`. Default is exclusive (`()`). Use `inclusivity` to control bounds: `'()'`, `'[]'`, `'[)'`, `'(]'`.
+
+### `isToday(): boolean`
+
+Returns `true` if this date is today.
+
+### `isTomorrow(): boolean`
+
+Returns `true` if this date is tomorrow.
+
+### `isYesterday(): boolean`
+
+Returns `true` if this date is yesterday.
+
+### `toString(): string`
+
+Returns a human-readable string representation of the date.
 
 ### `diff(other, unit?, floating?): number`
 Difference in the given unit. `floating=true` for decimal precision.

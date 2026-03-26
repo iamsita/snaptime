@@ -1,6 +1,6 @@
 import { describe, test, expect } from '@jest/globals'
-import parseNatural from '../src/package/NaturalLanguage'
-import DateFormat from '../src/package/DateFormat'
+import parseNatural from '../src/ecosystem/NaturalLanguage'
+import DateFormat from '../src/core/DateFormat'
 
 // Thursday, January 15, 2026 at 12:00:00 local time
 // We use local Date constructor to match the source implementation

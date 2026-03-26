@@ -1,6 +1,6 @@
 import { describe, test, expect } from '@jest/globals'
-import Timezone from '../src/package/Timezone'
-import DateFormat from '../src/package/DateFormat'
+import Timezone from '../src/ecosystem/Timezone'
+import DateFormat from '../src/core/DateFormat'
 
 // Fixed UTC instants for deterministic results regardless of host timezone
 // Jan 15, 2026 12:00:00 UTC

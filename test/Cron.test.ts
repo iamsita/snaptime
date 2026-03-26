@@ -1,6 +1,6 @@
 import { describe, test, expect } from '@jest/globals'
-import Cron from '../src/package/Cron'
-import DateFormat from '../src/package/DateFormat'
+import Cron from '../src/ecosystem/Cron'
+import DateFormat from '../src/core/DateFormat'
 
 // ---------------------------------------------------------------------------
 // Helpers

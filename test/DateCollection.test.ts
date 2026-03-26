@@ -1,6 +1,6 @@
 import { describe, test, expect } from '@jest/globals'
-import DateCollection from '../src/package/DateCollection'
-import DateFormat from '../src/package/DateFormat'
+import DateCollection from '../src/collections/DateCollection'
+import DateFormat from '../src/core/DateFormat'
 
 // ---------------------------------------------------------------------------
 // Helpers

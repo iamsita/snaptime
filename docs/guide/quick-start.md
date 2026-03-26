@@ -48,8 +48,14 @@ const b = d8('2026-01-16T12:00:00Z')
 a.isBefore(b)          // → true
 b.isAfter(a)           // → true
 a.isSame(a.clone())    // → true
+a.isSameOrBefore(b)    // → true
 b.diff(a, 'day')       // → 1
 b.diff(a, 'hour')      // → 24
+
+// isBetween with inclusivity
+const c = d8('2026-01-15T12:00:00Z')
+c.isBetween(a, b, '[]')  // → true  (inclusive on both ends)
+c.isBetween(a, b, '()')  // → false (exclusive — c equals a)
 ```
 
 ## 5. Relative Time & Age
@@ -73,6 +79,10 @@ Duration.parse('2h30m').humanize(false)  // → "2 hours, 30 minutes"
 Duration.parse('1d').toDays()            // → 1
 new Duration(3600000).humanize()         // → "1h"
 new Duration(3600000).humanize(false)    // → "1 hour"
+
+// Parse ISO 8601 durations
+Duration.fromISO('PT30M').humanize(false)  // → "30 minutes"
+Duration.fromISO('P1DT12H').toHours()      // → 36
 ```
 
 ## 7. Timezones
@@ -111,6 +121,10 @@ parseNatural('3 days ago').isValid()                       // → true
 parseNatural('last day of february 2024').format('MM-DD') // → "02-29" (leap!)
 parseNatural('1st monday of january 2026').format('DD')   // → "05"
 parseNatural('gibberish').isValid()                        // → false
+
+// Time-of-day and relative expressions
+parseNatural('tomorrow at 3pm').format('YYYY-MM-DD HH:mm')  // → "2026-01-16 15:00" (approx)
+parseNatural('5 hours ago').isValid()                         // → true
 ```
 
 ## 10. Business Days

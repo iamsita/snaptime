@@ -1,7 +1,7 @@
 import { describe, test, expect } from '@jest/globals'
-import DateRange from '../src/package/DateRange'
-import DateFormat from '../src/package/DateFormat'
-import Duration from '../src/package/Duration'
+import DateRange from '../src/collections/DateRange'
+import DateFormat from '../src/core/DateFormat'
+import Duration from '../src/core/Duration'
 
 // Use UTC timestamps to keep tests machine-independent
 // Jan 1–31, 2026 UTC

@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeEach, afterEach, jest } from '@jest/globals'
-import DateFormat from '../src/package/DateFormat'
-import Duration from '../src/package/Duration'
+import DateFormat from '../src/core/DateFormat'
+import Duration from '../src/core/Duration'
 
 // Fixed fake time: Thursday, January 15, 2026, noon UTC
 const FAKE_NOW = '2026-01-15T12:00:00.000Z'

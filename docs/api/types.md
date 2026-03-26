@@ -8,6 +8,38 @@ import type { ... } from '@anilkumarthakur/d8'
 
 ---
 
+## Common Input Types
+
+```typescript
+/** Accepted date input across the API */
+type DateInput = string | number | Date | DateFormat
+
+/** Accepted unit input for comparison and arithmetic methods */
+type UnitInput =
+  | 'millisecond' | 'second' | 'minute' | 'hour'
+  | 'day' | 'date' | 'month' | 'year'
+  | 'week' | 'quarter'
+
+/** Plain object describing date components */
+interface DateObject {
+  year?: number
+  month?: number
+  day?: number
+  hour?: number
+  minute?: number
+  second?: number
+  millisecond?: number
+}
+
+/** Controls boundary inclusivity for `isBetween()` */
+type Inclusivity = '()' | '[]' | '[)' | '(]'
+
+/** Any value that can be used where a DateFormat is expected */
+type DateFormatLike = DateInput | DateFormat
+```
+
+---
+
 ## Unit Types
 
 ```typescript

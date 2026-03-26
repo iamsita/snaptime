@@ -107,3 +107,23 @@ diff.humanize() // → "1 year, 2 months, 5 days"
 // Same date:
 b.preciseDiff(b).humanize() // → "just now"
 ```
+
+## isSameOrBefore / isSameOrAfter
+
+```js
+d8('2026-03-15').isSameOrBefore('2026-03-15')  // true
+d8('2026-03-15').isSameOrAfter('2026-03-14')   // true
+```
+
+## isBetween with Inclusivity
+
+```js
+d8('2026-03-15').isBetween('2026-03-01', '2026-03-31', undefined, '[]')  // inclusive
+d8('2026-03-01').isBetween('2026-03-01', '2026-03-31', undefined, '[)')  // start-inclusive
+```
+
+## isSame with Unit Granularity
+
+```js
+d8('2026-03-15 10:00').isSame('2026-03-15 22:00', 'day')  // true (same day)
+```

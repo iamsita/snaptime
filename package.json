@@ -7,6 +7,10 @@
   "main": "dist/index.umd.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/anilkumarthakur60/snaptime.git"
@@ -33,7 +37,10 @@
     "date-formatting",
     "date-parsing",
     "natural-language",
-    "zero-dependency"
+    "zero-dependency",
+    "iso-8601",
+    "calendar",
+    "fiscal-year"
   ],
   "exports": {
     ".": {
@@ -48,6 +55,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint . --ignore-pattern node_modules/ --ignore-pattern dist/ --ignore-pattern package-lock.json",
     "format": "prettier --write src/ test/",
     "format:check": "prettier --check src/",

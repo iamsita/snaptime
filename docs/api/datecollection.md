@@ -65,6 +65,30 @@ Filter to dates in `[start, end]` (inclusive).
 ### `compact(): DateCollection`
 Remove invalid dates.
 
+### `[Symbol.iterator](): Iterator<DateFormat>`
+Makes the collection iterable with `for...of` loops and spread syntax.
+
+### `forEach(fn: (d: DateFormat, i: number) => void): void`
+Execute a function for each date in the collection.
+
+### `reduce<T>(fn: (acc: T, d: DateFormat, i: number) => T, initial: T): T`
+Reduce the collection to a single value.
+
+### `some(fn: (d: DateFormat) => boolean): boolean`
+Returns `true` if at least one date satisfies the predicate.
+
+### `every(fn: (d: DateFormat) => boolean): boolean`
+Returns `true` if all dates satisfy the predicate.
+
+### `find(fn: (d: DateFormat) => boolean): DateFormat | undefined`
+Return the first date matching the predicate, or `undefined`.
+
+### `merge(other: DateCollection): DateCollection`
+Combine two collections into a new one containing all dates from both.
+
+### `span(): DateRange`
+Return a `DateRange` from the earliest to the latest date in the collection.
+
 ---
 
 See the [DateCollection Guide](../guide/datecollection) for examples.

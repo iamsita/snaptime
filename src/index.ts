@@ -1,10 +1,10 @@
-import DateFormat from './DateFormat'
-import Duration from './Duration'
-import DateRange from './DateRange'
-import DateCollection from './DateCollection'
-import Timezone from './Timezone'
-import Cron from './Cron'
-import parseNatural from './NaturalLanguage'
+import DateFormat from './core/DateFormat'
+import Duration from './core/Duration'
+import DateRange from './collections/DateRange'
+import DateCollection from './collections/DateCollection'
+import Timezone from './ecosystem/Timezone'
+import Cron from './ecosystem/Cron'
+import parseNatural from './ecosystem/NaturalLanguage'
 import {
   isBusinessDay,
   addBusinessDays,
@@ -13,11 +13,16 @@ import {
   prevBusinessDay,
   businessDaysBetween,
   getHolidays
-} from './BusinessDay'
+} from './ecosystem/BusinessDay'
+import { resolveUnit } from './core/helpers'
 import type {
   Unit,
+  UnitInput,
+  DateInput,
+  DateObject,
   SortOrder,
   WeekStart,
+  Inclusivity,
   RangeIterateUnit,
   GroupByUnit,
   UniqueUnit,
@@ -27,6 +32,7 @@ import type {
   LocaleCalendar,
   PluginFn,
   DateFormatPluginMethods,
+  DateFormatLike,
   PreciseDiffResult,
   AgeResult,
   CountdownResult,
@@ -35,28 +41,28 @@ import type {
   FiscalConfig,
   CronField,
   DateFormatStatic
-} from './type'
+} from './core/types'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Factory function — main entry point
 // ─────────────────────────────────────────────────────────────────────────────
 
 const dateFormat = Object.assign(
-  (input: string | number | Date | DateFormat = Date.now(), opts: { utc?: boolean } = {}) => {
-    return new DateFormat(input, opts)
+  (input: DateInput = Date.now(), opts: { utc?: boolean } = {}) => {
+    return new DateFormat(input as string | number | Date | DateFormat, opts)
   },
   {
     // Core static methods
     parse: (str: string, fmt: string, strict?: boolean) => DateFormat.parse(str, fmt, strict),
-    min: (...args: (string | number | Date | DateFormat)[]) => DateFormat.min(...args),
-    max: (...args: (string | number | Date | DateFormat)[]) => DateFormat.max(...args),
-    duration: (n: number, unit: Unit) => DateFormat.duration(n, unit),
+    fromObject: (obj: DateObject, opts?: { utc?: boolean }) => DateFormat.fromObject(obj, opts),
+    min: (...args: DateInput[]) => DateFormat.min(...args),
+    max: (...args: DateInput[]) => DateFormat.max(...args),
+    duration: (n: number, unit: UnitInput) => DateFormat.duration(n, unit),
     locale: (name: string, data?: LocaleData) => DateFormat.locale(name, data),
     use: (plugin: PluginFn) => DateFormat.use(plugin),
 
     // Date range
-    range: (start: string | number | Date | DateFormat, end: string | number | Date | DateFormat) =>
-      new DateRange(start, end),
+    range: (start: DateInput, end: DateInput) => new DateRange(start, end),
 
     // Natural language
     natural: (input: string, ref?: DateFormat) => parseNatural(input, ref),
@@ -65,7 +71,7 @@ const dateFormat = Object.assign(
     cron: (expression: string) => new Cron(expression),
 
     // Collection
-    collection: (dates: (string | number | Date | DateFormat)[]) => new DateCollection(dates),
+    collection: (dates: DateInput[]) => new DateCollection(dates),
 
     // Timezone
     tz: (timezone: string) => new Timezone(timezone),
@@ -105,6 +111,7 @@ export {
   prevBusinessDay,
   businessDaysBetween,
   getHolidays,
+  resolveUnit,
 
   // Factory
   dateFormat
@@ -116,8 +123,12 @@ export {
 
 export type {
   Unit,
+  UnitInput,
+  DateInput,
+  DateObject,
   SortOrder,
   WeekStart,
+  Inclusivity,
   RangeIterateUnit,
   GroupByUnit,
   UniqueUnit,
@@ -127,6 +138,7 @@ export type {
   LocaleCalendar,
   PluginFn,
   DateFormatPluginMethods,
+  DateFormatLike,
   PreciseDiffResult,
   AgeResult,
   CountdownResult,

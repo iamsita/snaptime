@@ -34,6 +34,22 @@ d8('invalid string').isValid() // → false
 d8(NaN).isValid()              // → false
 ```
 
+### From Object
+
+```typescript
+import { DateFormat } from '@anilkumarthakur/d8'
+
+DateFormat.fromObject({ year: 2026, month: 3, day: 26 })
+// → 2026-03-26T00:00:00.000Z
+
+DateFormat.fromObject({ year: 2026, month: 1, day: 15, hour: 14, minute: 30 })
+// → 2026-01-15T14:30:00.000Z
+
+// Only year is required; other fields default to sensible values:
+DateFormat.fromObject({ year: 2026 })
+// → 2026-01-01T00:00:00.000Z
+```
+
 ---
 
 ## Formatting
@@ -110,6 +126,19 @@ d8('2026-01-15T12:00:00Z').format('A')  // → "PM"
 // 12-hour edge cases:
 d8('2026-01-15T00:00:00Z').format('hh') // → "12" (midnight)
 d8('2026-01-15T01:00:00Z').format('h')  // → "1"
+```
+
+### Escaping Text in Format Strings
+
+Wrap literal text in square brackets `[...]` to prevent it from being interpreted as tokens:
+
+```typescript
+const d = d8('2026-01-15T12:00:00Z')
+
+d.format('[Year:] YYYY')              // → "Year: 2026"
+d.format('[Today is] dddd')           // → "Today is Thursday"
+d.format('[Month] M [of] YYYY')      // → "Month 1 of 2026"
+d.format('[It is] h:mm A [on] Do')   // → "It is 12:00 PM on 15th"
 ```
 
 ### Intl Formatting
@@ -214,6 +243,44 @@ d.unix()     // → seconds since epoch (floored)
 
 ---
 
+## Unit Aliases
+
+All methods that accept a unit string (e.g. `get`, `set`, `add`, `subtract`, `startOf`, `endOf`, `diff`) also accept short aliases and plural forms:
+
+| Full Name      | Short Alias | Plural Forms         |
+|:---------------|:------------|:---------------------|
+| `year`         | `y`         | `years`              |
+| `month`        | `M`         | `months`             |
+| `day`          | `d`         | `days`               |
+| `hour`         | `h`         | `hours`              |
+| `minute`       | `m`         | `minutes`            |
+| `second`       | `s`         | `seconds`            |
+| `millisecond`  | `ms`        | `milliseconds`       |
+| `week`         | `w`         | `weeks`              |
+
+```typescript
+const d = d8('2026-06-15T14:30:45.123Z')
+
+// Short aliases:
+d.get('y')               // → 2026
+d.get('M')               // → 6
+d.get('d')               // → 15 (date)
+d.add(1, 'w')            // → adds 1 week
+d.startOf('h')           // → start of the hour
+d.diff(other, 's')       // → diff in seconds
+
+// Plural forms:
+d.add(3, 'days')         // → same as d.add(3, 'day')
+d.subtract(2, 'hours')   // → same as d.subtract(2, 'hour')
+d.startOf('months')      // → same as d.startOf('month')
+```
+
+::: tip Note on case sensitivity
+The short alias `M` (month) is uppercase to distinguish it from `m` (minute).
+:::
+
+---
+
 ## Arithmetic
 
 ```typescript
@@ -266,11 +333,42 @@ a.isAfter(b)  // → false
 a.isSame(a.clone()) // → true
 a.isSame(b)         // → false
 
-// isBetween is exclusive on boundaries:
+// isSame with unit granularity:
+const c = d8('2026-01-15T18:00:00Z')
+a.isSame(c, 'day')    // → true  (same calendar day)
+a.isSame(c, 'hour')   // → false (different hour)
+a.isSame(b, 'month')  // → true  (both January 2026)
+a.isSame(b, 'year')   // → true  (both 2026)
+
+// isSameOrBefore / isSameOrAfter:
+a.isSameOrBefore(b)           // → true
+a.isSameOrBefore(a.clone())   // → true
+b.isSameOrBefore(a)           // → false
+
+b.isSameOrAfter(a)            // → true
+a.isSameOrAfter(a.clone())    // → true
+a.isSameOrAfter(b)            // → false
+
+// With unit granularity:
+a.isSameOrBefore(c, 'day')    // → true  (same day)
+a.isSameOrAfter(c, 'month')   // → true  (same month)
+
+// isBetween — default is exclusive '()' on both boundaries:
 const mid = d8('2026-01-15T18:00:00Z')
 mid.isBetween(a, b) // → true
 a.isBetween(a, b)   // → false (on boundary)
 b.isBetween(a, b)   // → false (on boundary)
+
+// isBetween with inclusivity:
+a.isBetween(a, b, undefined, '[]')  // → true  (inclusive on both ends)
+b.isBetween(a, b, undefined, '[]')  // → true
+a.isBetween(a, b, undefined, '[)')  // → true  (inclusive start, exclusive end)
+b.isBetween(a, b, undefined, '[)')  // → false
+a.isBetween(a, b, undefined, '(]')  // → false (exclusive start, inclusive end)
+b.isBetween(a, b, undefined, '(]')  // → true
+
+// isBetween with unit granularity:
+mid.isBetween(a, b, 'day')          // → true (compared at day level)
 ```
 
 ### Diff
@@ -365,6 +463,20 @@ d8('1500-01-01').isLastMillennium()              // → true
 d.isSameMillennium(d8('2500-01-01'))             // → true
 ```
 
+### Semantic Day Checks
+
+```typescript
+// Assuming "now" is 2026-01-15
+d8('2026-01-15').isToday()     // → true
+d8('2026-01-16').isToday()     // → false
+
+d8('2026-01-16').isTomorrow()  // → true
+d8('2026-01-15').isTomorrow()  // → false
+
+d8('2026-01-14').isYesterday() // → true
+d8('2026-01-15').isYesterday() // → false
+```
+
 ### Hour / Minute / Second / Millisecond
 
 ```typescript
@@ -412,6 +524,10 @@ d8('2026-01-16T12:00:00Z').fromNow()   // → "in 1 day"
 d8('2026-01-15T12:00:00.500Z').fromNow() // → "in 500 milliseconds"
 d8('2026-01-15T12:00:00.001Z').fromNow() // → "in 1 millisecond"
 ```
+
+::: tip Locale-aware relative time
+When a locale is registered with a `relativeTime` configuration, `fromNow()` will use the locale's `relativeTime` strings instead of the English defaults. Register a locale with `DateFormat.locale()` to enable this.
+:::
 
 ### calendar()
 
@@ -628,6 +744,9 @@ d.toObject()
 // → { year: 2026, month: 1, date: 15, hour: 12, minute: 0, second: 0, millisecond: 0 }
 
 d.toDate()      // → native JavaScript Date instance
+
+d.toString()    // → "2026-01-15T12:00:00.000Z" (ISO string for valid dates)
+d8(NaN).toString() // → "Invalid Date"
 ```
 
 ---

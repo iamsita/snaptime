@@ -115,3 +115,28 @@ range.split(1, 'day').length
 range.toArray('day').map(d => d.format('MM-DD'))
 // → ["01-01", "01-02", "01-03"]
 ```
+
+## Iteration with for...of
+
+```js
+const col = d8.collection(['2026-01-01', '2026-06-15', '2026-12-31'])
+for (const date of col) {
+  console.log(date.format('MMM D'))
+}
+```
+
+## forEach, some, every, find
+
+```js
+col.forEach((d, i) => console.log(`${i}: ${d.format()}`))
+col.some(d => d.isWeekend())
+col.every(d => d.isValid())
+col.find(d => d.get('month') === 6)
+```
+
+## merge and span
+
+```js
+const merged = colA.merge(colB)
+const range = col.span()  // DateRange from min to max
+```

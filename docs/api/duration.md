@@ -28,6 +28,14 @@ Duration.parse('500ms')      // 500 milliseconds
 
 **Tokens:** `Y/y` (years), `M` (months), `w` (weeks), `d` (days), `h` (hours), `m` (minutes), `s` (seconds), `ms` (milliseconds).
 
+### `Duration.fromISO(str: string): Duration`
+
+Parse an ISO 8601 duration string (e.g. `'P1Y2M3DT4H5M6S'`).
+
+### `Duration.between(a: number | Date, b: number | Date): Duration`
+
+Create a `Duration` representing the time between two timestamps or `Date` objects.
+
 ---
 
 ## Instance Methods
@@ -59,15 +67,33 @@ Format with template tokens: `HH`, `H`, `mm`, `m`, `ss`, `s`, `SSS`.
 ### `toMinutes(): number`
 ### `toHours(): number`
 ### `toDays(): number`
+### `toWeeks(): number`
+### `toMonths(): number`
+### `toYears(): number`
 
 ### `valueOf(): number`
 Raw milliseconds.
 
 ### `isZero(): boolean`
 ### `isNegative(): boolean`
+### `isPositive(): boolean`
 
 ### `abs(): Duration`
 Absolute value.
+
+### `negate(): Duration`
+Return a new `Duration` with the sign flipped.
+
+### `equals(other): boolean`
+Returns `true` if both durations represent the same length of time.
+
+### `lessThan(other): boolean`
+### `greaterThan(other): boolean`
+### `lessThanOrEqual(other): boolean`
+### `greaterThanOrEqual(other): boolean`
+
+### `toISO(): string`
+Return the duration as an ISO 8601 duration string (e.g. `'P1DT2H3M'`).
 
 ### `toString(): string`
 Same as `humanize(true)`.

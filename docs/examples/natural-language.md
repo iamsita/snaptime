@@ -97,3 +97,26 @@ scheduleReminder('in 3 days')
 scheduleReminder('nonsense')
 // → { error: "Invalid date" }
 ```
+
+## Time Support
+
+```js
+d8.natural('tomorrow at 3pm')
+d8.natural('next friday at 10:30')
+d8.natural('yesterday at midnight')
+```
+
+## Sub-day Offsets
+
+```js
+d8.natural('5 hours ago')
+d8.natural('30 minutes from now')
+d8.natural('in 10 seconds')
+```
+
+## Named Times
+
+```js
+d8.natural('noon')       // today at 12:00
+d8.natural('midnight')   // today at 00:00
+```
