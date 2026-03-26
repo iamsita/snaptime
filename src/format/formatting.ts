@@ -32,7 +32,7 @@ export function resolveLocale(data?: LocaleData): ResolvedLocale {
     weekdaysShort: data?.weekdaysShort ?? weekdays.map((w) => w.slice(0, 3)),
     weekdaysMin: data?.weekdaysMin ?? weekdays.map((w) => w.slice(0, 2)),
     relativeTime: data?.relativeTime,
-    calendar: data?.calendar,
+    calendar: data?.calendar
   }
 }
 
@@ -42,17 +42,17 @@ export function resolveLocale(data?: LocaleData): ResolvedLocale {
 
 export interface DateComponents {
   year: number
-  month: number      // 1-12
-  date: number       // 1-31
-  hour: number       // 0-23
-  minute: number     // 0-59
-  second: number     // 0-59
-  day: number        // 0=Sun..6=Sat
+  month: number // 1-12
+  date: number // 1-31
+  hour: number // 0-23
+  minute: number // 0-59
+  second: number // 0-59
+  day: number // 0=Sun..6=Sat
   timestampMs: number
   dayOfYear: number
   isoWeek: number
   isoWeekYear: number
-  nativeDate: Date   // for timezone offset
+  nativeDate: Date // for timezone offset
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -108,13 +108,13 @@ export function formatDate(fmt: string, c: DateComponents, locale: ResolvedLocal
     A: c.hour < 12 ? 'AM' : 'PM',
     a: c.hour < 12 ? 'am' : 'pm',
     X: String(Math.floor(c.timestampMs / 1000)),
-    x: String(c.timestampMs),
+    x: String(c.timestampMs)
   }
 
   // Token replacement (longest match first)
   const tokens = Object.keys(tokenMap).sort((a, b) => b.length - a.length)
   let out = ''
-  for (let i = 0; i < cleanFmt.length;) {
+  for (let i = 0; i < cleanFmt.length; ) {
     if (cleanFmt[i] === ESC) {
       const end = cleanFmt.indexOf(ESC, i + 1)
       const idx = Number(cleanFmt.substring(i + 1, end))
@@ -149,7 +149,7 @@ export function formatIntl(
 ): string {
   const formatter = new Intl.DateTimeFormat(localeName, {
     ...opts,
-    timeZone: isUtc ? 'UTC' : undefined,
+    timeZone: isUtc ? 'UTC' : undefined
   })
 
   if (opts.weekday === 'long' && opts.month === 'long' && opts.day === 'numeric') {

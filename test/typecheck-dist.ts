@@ -13,7 +13,7 @@ import d8, {
   parseNatural,
   isBusinessDay,
   getHolidays,
-  resolveUnit,
+  resolveUnit
 } from '../dist/index'
 
 import type {
@@ -29,7 +29,7 @@ import type {
   CalendarCell,
   FiscalConfig,
   HolidayCountry,
-  LocaleData,
+  LocaleData
 } from '../dist/index'
 
 // Factory
@@ -47,7 +47,15 @@ const sameAfter: boolean = a.isSameOrAfter('2026-01-01', 'year')
 const btw: boolean = a.isBetween('2025-01-01', '2027-01-01', undefined, '[]')
 const today: boolean = a.isToday()
 const str: string = a.toString()
-const obj: { year: number; month: number; date: number; hour: number; minute: number; second: number; millisecond: number } = a.toObject()
+const obj: {
+  year: number
+  month: number
+  date: number
+  hour: number
+  minute: number
+  second: number
+  millisecond: number
+} = a.toObject()
 const rfc: string = a.toRFC2822()
 const sql: string = a.toSQL()
 const excel: number = a.toExcel()
@@ -78,11 +86,13 @@ const contains: boolean = range.contains('2026-06-15')
 
 // DateCollection
 const col = d8.collection(['2026-01-01', '2026-06-15'])
-const found: DateFormat | undefined = col.find(d => d.isFriday())
+const found: DateFormat | undefined = col.find((d) => d.isFriday())
 const sp: DateRange = col.span()
 const merged: DateCollection = col.merge(col)
-const some: boolean = col.some(d => d.isWeekend())
-for (const d of col) { void d.format() }
+const some: boolean = col.some((d) => d.isWeekend())
+for (const d of col) {
+  void d.format()
+}
 
 // Timezone
 const tz = d8.tz('UTC')
@@ -113,5 +123,22 @@ const _fc: FiscalConfig = { startMonth: 4 }
 
 void [a, b, c, mn, mx, fmt, iso, sameBefore, sameAfter, btw, today, str, obj, rfc, sql, excel]
 void [pd, age, cd, grid, fy, added, setted, diffed, dur, dur2, weeks, months, pos, neg, eq, isoD]
-void [range, contains, col, found, sp, merged, some, tz, tzFmt, cron, next, nl, nl2, isBd, hols, unit]
+void [
+  range,
+  contains,
+  col,
+  found,
+  sp,
+  merged,
+  some,
+  tz,
+  tzFmt,
+  cron,
+  next,
+  nl,
+  nl2,
+  isBd,
+  hols,
+  unit
+]
 void [_ui, _di, _do, _inc, _hc, _fc]

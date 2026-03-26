@@ -22,14 +22,31 @@ export default class Duration {
     while ((m = re.exec(input))) {
       const v = parseFloat(m[1])
       switch (m[2]) {
-        case 'Y': case 'y': total += v * MS_PER_UNIT.year; break
-        case 'M': total += v * MS_PER_UNIT.month; break
-        case 'w': total += v * MS_PER_UNIT.week; break
-        case 'd': total += v * MS_PER_UNIT.day; break
-        case 'h': total += v * MS_PER_UNIT.hour; break
-        case 'm': total += v * MS_PER_UNIT.minute; break
-        case 's': total += v * MS_PER_UNIT.second; break
-        case 'ms': total += v; break
+        case 'Y':
+        case 'y':
+          total += v * MS_PER_UNIT.year
+          break
+        case 'M':
+          total += v * MS_PER_UNIT.month
+          break
+        case 'w':
+          total += v * MS_PER_UNIT.week
+          break
+        case 'd':
+          total += v * MS_PER_UNIT.day
+          break
+        case 'h':
+          total += v * MS_PER_UNIT.hour
+          break
+        case 'm':
+          total += v * MS_PER_UNIT.minute
+          break
+        case 's':
+          total += v * MS_PER_UNIT.second
+          break
+        case 'ms':
+          total += v
+          break
       }
     }
     return new Duration(total)
@@ -43,7 +60,8 @@ export default class Duration {
    * @example Duration.fromISO('P2W')
    */
   static fromISO(input: string): Duration {
-    const re = /^P(?:(\d+(?:\.\d+)?)Y)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)W)?(?:(\d+(?:\.\d+)?)D)?(?:T(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
+    const re =
+      /^P(?:(\d+(?:\.\d+)?)Y)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)W)?(?:(\d+(?:\.\d+)?)D)?(?:T(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
     const m = re.exec(input)
     if (!m) throw new Error(`Invalid ISO 8601 duration: "${input}"`)
 
@@ -95,14 +113,30 @@ export default class Duration {
 
   // ── Convenience getters ─────────────────────────────────────────────────
 
-  toMilliseconds(): number { return this.as('millisecond') }
-  toSeconds(): number { return this.as('second') }
-  toMinutes(): number { return this.as('minute') }
-  toHours(): number { return this.as('hour') }
-  toDays(): number { return this.as('day') }
-  toWeeks(): number { return this.as('week') }
-  toMonths(): number { return this.as('month') }
-  toYears(): number { return this.as('year') }
+  toMilliseconds(): number {
+    return this.as('millisecond')
+  }
+  toSeconds(): number {
+    return this.as('second')
+  }
+  toMinutes(): number {
+    return this.as('minute')
+  }
+  toHours(): number {
+    return this.as('hour')
+  }
+  toDays(): number {
+    return this.as('day')
+  }
+  toWeeks(): number {
+    return this.as('week')
+  }
+  toMonths(): number {
+    return this.as('month')
+  }
+  toYears(): number {
+    return this.as('year')
+  }
 
   // ── Value / inspection ──────────────────────────────────────────────────
 

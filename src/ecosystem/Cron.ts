@@ -143,7 +143,11 @@ export default class Cron {
   }
 
   next(from?: DateInput): DateFormat {
-    const start = from ? (from instanceof DateFormat ? from : new DateFormat(from as string | number | Date)) : new DateFormat()
+    const start = from
+      ? from instanceof DateFormat
+        ? from
+        : new DateFormat(from as string | number | Date)
+      : new DateFormat()
     let cursor = start.set('second', 0).set('millisecond', 0).add(1, 'minute')
 
     for (let i = 0; i < MAX_ITER_MINUTES; i++) {
@@ -155,7 +159,11 @@ export default class Cron {
   }
 
   prev(from?: DateInput): DateFormat {
-    const start = from ? (from instanceof DateFormat ? from : new DateFormat(from as string | number | Date)) : new DateFormat()
+    const start = from
+      ? from instanceof DateFormat
+        ? from
+        : new DateFormat(from as string | number | Date)
+      : new DateFormat()
     let cursor = start.set('second', 0).set('millisecond', 0).subtract(1, 'minute')
 
     for (let i = 0; i < MAX_ITER_MINUTES; i++) {

@@ -2,26 +2,49 @@ import DateFormat from '../core/DateFormat'
 import type { Unit } from '../core/types'
 
 const WEEKDAYS: Record<string, number> = {
-  sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
-  thursday: 4, friday: 5, saturday: 6,
+  sunday: 0,
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6
 }
 
 const MONTHS: Record<string, number> = {
-  january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
-  july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+  january: 1,
+  february: 2,
+  march: 3,
+  april: 4,
+  may: 5,
+  june: 6,
+  july: 7,
+  august: 8,
+  september: 9,
+  october: 10,
+  november: 11,
+  december: 12
 }
 
-const MONTH_PATTERN = 'january|february|march|april|may|june|july|august|september|october|november|december'
+const MONTH_PATTERN =
+  'january|february|march|april|may|june|july|august|september|october|november|december'
 const WEEKDAY_PATTERN = 'sunday|monday|tuesday|wednesday|thursday|friday|saturday'
 
 const UNIT_MAP: Record<string, Unit> = {
-  second: 'second', seconds: 'second',
-  minute: 'minute', minutes: 'minute',
-  hour: 'hour', hours: 'hour',
-  day: 'day', days: 'day',
-  week: 'week', weeks: 'week',
-  month: 'month', months: 'month',
-  year: 'year', years: 'year',
+  second: 'second',
+  seconds: 'second',
+  minute: 'minute',
+  minutes: 'minute',
+  hour: 'hour',
+  hours: 'hour',
+  day: 'day',
+  days: 'day',
+  week: 'week',
+  weeks: 'week',
+  month: 'month',
+  months: 'month',
+  year: 'year',
+  years: 'year'
 }
 
 function parseMonth(s: string): number | undefined {
@@ -169,9 +192,11 @@ export default function parseNatural(input: string, ref?: DateFormat): DateForma
   }
 
   // "Nth weekday of month [year]" e.g. "3rd Friday of January" or "2nd Tuesday of March 2026"
-  m = lower.match(new RegExp(
-    `^(\\d+)(?:st|nd|rd|th)\\s+(${WEEKDAY_PATTERN})\\s+of\\s+(${MONTH_PATTERN})(?:\\s+(\\d{4}))?$`
-  ))
+  m = lower.match(
+    new RegExp(
+      `^(\\d+)(?:st|nd|rd|th)\\s+(${WEEKDAY_PATTERN})\\s+of\\s+(${MONTH_PATTERN})(?:\\s+(\\d{4}))?$`
+    )
+  )
   if (m) {
     const n = parseInt(m[1], 10)
     const weekday = parseWeekday(m[2])!

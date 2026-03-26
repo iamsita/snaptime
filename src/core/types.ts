@@ -22,15 +22,24 @@ export type Unit =
  */
 export type UnitInput =
   | Unit
-  | 'ms' | 'milliseconds'
-  | 's' | 'seconds'
-  | 'm' | 'minutes'
-  | 'h' | 'hours'
-  | 'd' | 'days'
-  | 'D' | 'dates'
-  | 'w' | 'weeks'
-  | 'M' | 'months'
-  | 'y' | 'years'
+  | 'ms'
+  | 'milliseconds'
+  | 's'
+  | 'seconds'
+  | 'm'
+  | 'minutes'
+  | 'h'
+  | 'hours'
+  | 'd'
+  | 'days'
+  | 'D'
+  | 'dates'
+  | 'w'
+  | 'weeks'
+  | 'M'
+  | 'months'
+  | 'y'
+  | 'years'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Date input — the universal input type accepted by most APIs
@@ -41,7 +50,6 @@ export type UnitInput =
  * Use this instead of repeating `string | number | Date | DateFormat` everywhere.
  */
 // Forward-reference friendly: DateFormat is checked via duck-typing at runtime
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DateFormatLike {
   valueOf(): number
   isValid(): boolean

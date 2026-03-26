@@ -12,7 +12,7 @@ import {
   nextBusinessDay,
   prevBusinessDay,
   businessDaysBetween,
-  getHolidays,
+  getHolidays
 } from './ecosystem/BusinessDay'
 import { resolveUnit } from './core/helpers'
 import type {
@@ -40,7 +40,7 @@ import type {
   CalendarGridOptions,
   FiscalConfig,
   CronField,
-  DateFormatStatic,
+  DateFormatStatic
 } from './core/types'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -84,8 +84,8 @@ const dateFormat = Object.assign(
       nextBusinessDay,
       prevBusinessDay,
       businessDaysBetween,
-      getHolidays,
-    },
+      getHolidays
+    }
   }
 )
 
@@ -114,7 +114,7 @@ export {
   resolveUnit,
 
   // Factory
-  dateFormat,
+  dateFormat
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -146,7 +146,7 @@ export type {
   CalendarGridOptions,
   FiscalConfig,
   CronField,
-  DateFormatStatic,
+  DateFormatStatic
 }
 
 export default dateFormat

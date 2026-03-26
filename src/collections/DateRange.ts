@@ -34,7 +34,7 @@ export default class DateRange {
     const t = toDF(date).valueOf()
     const lo = Math.min(this.start.valueOf(), this.end.valueOf())
     const hi = Math.max(this.start.valueOf(), this.end.valueOf())
-    return inclusive ? (t >= lo && t <= hi) : (t > lo && t < hi)
+    return inclusive ? t >= lo && t <= hi : t > lo && t < hi
   }
 
   /** True if this range temporally overlaps with another */
@@ -58,7 +58,12 @@ export default class DateRange {
   /** Union of two overlapping/adjacent ranges, or null if they don't overlap */
   merge(other: DateRange): DateRange | null {
     if (!this.overlaps(other)) return null
-    const all = [this.start.valueOf(), this.end.valueOf(), other.start.valueOf(), other.end.valueOf()]
+    const all = [
+      this.start.valueOf(),
+      this.end.valueOf(),
+      other.start.valueOf(),
+      other.end.valueOf()
+    ]
     return new DateRange(new DateFormat(Math.min(...all)), new DateFormat(Math.max(...all)))
   }
 
@@ -107,7 +112,9 @@ export default class DateRange {
   }
 
   equals(other: DateRange): boolean {
-    return this.start.valueOf() === other.start.valueOf() && this.end.valueOf() === other.end.valueOf()
+    return (
+      this.start.valueOf() === other.start.valueOf() && this.end.valueOf() === other.end.valueOf()
+    )
   }
 
   toString(): string {

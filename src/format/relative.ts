@@ -4,16 +4,19 @@
  */
 
 import { pad, pluralize } from '../core/helpers'
-import type { PreciseDiffResult, AgeResult, CountdownResult, LocaleRelativeTime, LocaleCalendar } from '../core/types'
+import type {
+  PreciseDiffResult,
+  AgeResult,
+  CountdownResult,
+  LocaleRelativeTime,
+  LocaleCalendar
+} from '../core/types'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // fromNow — relative time string
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function relativeTime(
-  diffMs: number,
-  relativeTimeLocale?: LocaleRelativeTime,
-): string {
+export function relativeTime(diffMs: number, relativeTimeLocale?: LocaleRelativeTime): string {
   const isNeg = diffMs < 0
   const absMs = Math.abs(diffMs)
 
@@ -46,13 +49,20 @@ export function relativeTime(
   // Use locale relativeTime if available
   if (relativeTimeLocale) {
     const keyMap: Record<string, string> = {
-      millisecond: 's', milliseconds: 's',
-      second: 's', seconds: 'ss',
-      minute: 'm', minutes: 'mm',
-      hour: 'h', hours: 'hh',
-      day: 'd', days: 'dd',
-      month: 'M', months: 'MM',
-      year: 'y', years: 'yy',
+      millisecond: 's',
+      milliseconds: 's',
+      second: 's',
+      seconds: 'ss',
+      minute: 'm',
+      minutes: 'mm',
+      hour: 'h',
+      hours: 'hh',
+      day: 'd',
+      days: 'dd',
+      month: 'M',
+      months: 'MM',
+      year: 'y',
+      years: 'yy'
     }
     const tmpl = relativeTimeLocale[keyMap[unit] as keyof LocaleRelativeTime]
     const label = tmpl.replace('%d', String(value))
@@ -75,14 +85,21 @@ export function calendarLabel(
   todayStartMs: number,
   formattedTime: string,
   formattedDate: string,
-  calendarLocale?: LocaleCalendar,
+  calendarLocale?: LocaleCalendar
 ): string {
   const diff = thisMs - todayStartMs
   const D = 864e5
 
-  if (diff >= 0 && diff < D) return calendarLocale?.sameDay?.replace('{time}', formattedTime) ?? `Today at ${formattedTime}`
-  if (diff < 0 && diff > -D) return calendarLocale?.lastDay?.replace('{time}', formattedTime) ?? `Yesterday at ${formattedTime}`
-  if (diff >= D && diff < 2 * D) return calendarLocale?.nextDay?.replace('{time}', formattedTime) ?? `Tomorrow at ${formattedTime}`
+  if (diff >= 0 && diff < D)
+    return calendarLocale?.sameDay?.replace('{time}', formattedTime) ?? `Today at ${formattedTime}`
+  if (diff < 0 && diff > -D)
+    return (
+      calendarLocale?.lastDay?.replace('{time}', formattedTime) ?? `Yesterday at ${formattedTime}`
+    )
+  if (diff >= D && diff < 2 * D)
+    return (
+      calendarLocale?.nextDay?.replace('{time}', formattedTime) ?? `Tomorrow at ${formattedTime}`
+    )
   return calendarLocale?.sameElse ?? formattedDate
 }
 
@@ -105,7 +122,7 @@ export function preciseDiff(
   bMs: number,
   aParts: DateParts,
   bParts: DateParts,
-  daysInPrevMonth: number,
+  daysInPrevMonth: number
 ): PreciseDiffResult {
   const isAfter = bMs >= aMs
   const lo = isAfter ? aParts : bParts
@@ -120,15 +137,39 @@ export function preciseDiff(
   let seconds = hi.second - lo.second
   let milliseconds = hi.millisecond - lo.millisecond
 
-  if (milliseconds < 0) { milliseconds += 1000; seconds-- }
-  if (seconds < 0) { seconds += 60; minutes-- }
-  if (minutes < 0) { minutes += 60; hours-- }
-  if (hours < 0) { hours += 24; days-- }
-  if (days < 0) { days += dim; months-- }
-  if (months < 0) { months += 12; years-- }
+  if (milliseconds < 0) {
+    milliseconds += 1000
+    seconds--
+  }
+  if (seconds < 0) {
+    seconds += 60
+    minutes--
+  }
+  if (minutes < 0) {
+    minutes += 60
+    hours--
+  }
+  if (hours < 0) {
+    hours += 24
+    days--
+  }
+  if (days < 0) {
+    days += dim
+    months--
+  }
+  if (months < 0) {
+    months += 12
+    years--
+  }
 
   return {
-    years, months, days, hours, minutes, seconds, milliseconds,
+    years,
+    months,
+    days,
+    hours,
+    minutes,
+    seconds,
+    milliseconds,
     humanize(): string {
       const parts: string[] = []
       if (years > 0) parts.push(pluralize(years, 'year'))
@@ -138,7 +179,7 @@ export function preciseDiff(
       if (minutes > 0) parts.push(pluralize(minutes, 'minute'))
       if (seconds > 0) parts.push(pluralize(seconds, 'second'))
       return parts.slice(0, 3).join(', ') || 'just now'
-    },
+    }
   }
 }
 
@@ -157,7 +198,7 @@ export function age(diffResult: PreciseDiffResult): AgeResult {
       if (this.months > 0) parts.push(`${this.months}mo`)
       if (this.days > 0) parts.push(`${this.days}d`)
       return parts.join(' ') || '0d'
-    },
+    }
   }
 }
 
@@ -177,7 +218,13 @@ export function countdown(targetMs: number, nowMs: number): CountdownResult {
   const milliseconds = Math.floor(abs % 1e3)
 
   return {
-    days, hours, minutes, seconds, milliseconds, total, isPast,
+    days,
+    hours,
+    minutes,
+    seconds,
+    milliseconds,
+    total,
+    isPast,
     format(tpl: string): string {
       return tpl
         .replace(/DD/g, pad(days))
@@ -197,6 +244,6 @@ export function countdown(targetMs: number, nowMs: number): CountdownResult {
       if (minutes > 0) parts.push(pluralize(minutes, 'minute'))
       if (seconds > 0) parts.push(pluralize(seconds, 'second'))
       return parts.slice(0, 2).join(', ') || 'now'
-    },
+    }
   }
 }

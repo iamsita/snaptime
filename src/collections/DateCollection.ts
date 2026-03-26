@@ -3,7 +3,9 @@ import DateRange from './DateRange'
 import type { DateInput, GroupByUnit, UniqueUnit } from '../core/types'
 
 function toDF(input: DateInput): DateFormat {
-  return input instanceof DateFormat ? input.clone() : new DateFormat(input as string | number | Date)
+  return input instanceof DateFormat
+    ? input.clone()
+    : new DateFormat(input as string | number | Date)
 }
 
 export default class DateCollection {
@@ -24,7 +26,7 @@ export default class DateCollection {
           return { value: dates[index++].clone(), done: false }
         }
         return { value: undefined as unknown as DateFormat, done: true }
-      },
+      }
     }
   }
 
@@ -48,7 +50,10 @@ export default class DateCollection {
       const result: DateFormat[] = []
       for (const d of this._dates) {
         const v = d.valueOf()
-        if (!seen.has(v)) { seen.add(v); result.push(d) }
+        if (!seen.has(v)) {
+          seen.add(v)
+          result.push(d)
+        }
       }
       return new DateCollection(result)
     }
@@ -57,7 +62,10 @@ export default class DateCollection {
     const result: DateFormat[] = []
     for (const d of this._dates) {
       const key = this._unitKey(d, unit)
-      if (!seen.has(key)) { seen.add(key); result.push(d) }
+      if (!seen.has(key)) {
+        seen.add(key)
+        result.push(d)
+      }
     }
     return new DateCollection(result)
   }
@@ -67,8 +75,14 @@ export default class DateCollection {
   }
 
   between(start: DateInput, end: DateInput): DateCollection {
-    const s = start instanceof DateFormat ? start.valueOf() : new DateFormat(start as string | number | Date).valueOf()
-    const e = end instanceof DateFormat ? end.valueOf() : new DateFormat(end as string | number | Date).valueOf()
+    const s =
+      start instanceof DateFormat
+        ? start.valueOf()
+        : new DateFormat(start as string | number | Date).valueOf()
+    const e =
+      end instanceof DateFormat
+        ? end.valueOf()
+        : new DateFormat(end as string | number | Date).valueOf()
     return new DateCollection(this._dates.filter((d) => d.valueOf() >= s && d.valueOf() <= e))
   }
 
@@ -84,15 +98,31 @@ export default class DateCollection {
     for (const d of this._dates) {
       let key: string
       switch (unit) {
-        case 'year': key = String(d.get('year')); break
-        case 'month': key = `${d.get('year')}-${String(d.get('month')).padStart(2, '0')}`; break
-        case 'week': key = `${d.isoWeekYear()}-W${String(d.isoWeek()).padStart(2, '0')}`; break
-        case 'day': key = d.format('YYYY-MM-DD'); break
-        case 'hour': key = `${d.format('YYYY-MM-DD')}T${String(d.get('hour')).padStart(2, '0')}`; break
-        case 'quarter': key = `${d.get('year')}-Q${d.quarter()}`; break
+        case 'year':
+          key = String(d.get('year'))
+          break
+        case 'month':
+          key = `${d.get('year')}-${String(d.get('month')).padStart(2, '0')}`
+          break
+        case 'week':
+          key = `${d.isoWeekYear()}-W${String(d.isoWeek()).padStart(2, '0')}`
+          break
+        case 'day':
+          key = d.format('YYYY-MM-DD')
+          break
+        case 'hour':
+          key = `${d.format('YYYY-MM-DD')}T${String(d.get('hour')).padStart(2, '0')}`
+          break
+        case 'quarter':
+          key = `${d.get('year')}-Q${d.quarter()}`
+          break
       }
       const arr = groups.get(key)
-      if (arr) { arr.push(d.clone()) } else { groups.set(key, [d.clone()]) }
+      if (arr) {
+        arr.push(d.clone())
+      } else {
+        groups.set(key, [d.clone()])
+      }
     }
     return groups
   }
@@ -101,24 +131,32 @@ export default class DateCollection {
 
   closest(target: DateInput): DateFormat {
     if (this._dates.length === 0) throw new Error('Cannot find closest in an empty collection')
-    const t = target instanceof DateFormat ? target : new DateFormat(target as string | number | Date)
+    const t =
+      target instanceof DateFormat ? target : new DateFormat(target as string | number | Date)
     let best = this._dates[0]
     let bestDiff = Math.abs(best.valueOf() - t.valueOf())
     for (let i = 1; i < this._dates.length; i++) {
       const diff = Math.abs(this._dates[i].valueOf() - t.valueOf())
-      if (diff < bestDiff) { best = this._dates[i]; bestDiff = diff }
+      if (diff < bestDiff) {
+        best = this._dates[i]
+        bestDiff = diff
+      }
     }
     return best.clone()
   }
 
   farthest(target: DateInput): DateFormat {
     if (this._dates.length === 0) throw new Error('Cannot find farthest in an empty collection')
-    const t = target instanceof DateFormat ? target : new DateFormat(target as string | number | Date)
+    const t =
+      target instanceof DateFormat ? target : new DateFormat(target as string | number | Date)
     let best = this._dates[0]
     let bestDiff = Math.abs(best.valueOf() - t.valueOf())
     for (let i = 1; i < this._dates.length; i++) {
       const diff = Math.abs(this._dates[i].valueOf() - t.valueOf())
-      if (diff > bestDiff) { best = this._dates[i]; bestDiff = diff }
+      if (diff > bestDiff) {
+        best = this._dates[i]
+        bestDiff = diff
+      }
     }
     return best.clone()
   }
@@ -204,13 +242,20 @@ export default class DateCollection {
 
   private _unitKey(d: DateFormat, unit: UniqueUnit): string {
     switch (unit) {
-      case 'year': return String(d.get('year'))
-      case 'month': return `${d.get('year')}-${d.get('month')}`
-      case 'week': return `${d.isoWeekYear()}-${d.isoWeek()}`
-      case 'day': return `${d.get('year')}-${d.get('month')}-${d.get('date')}`
-      case 'hour': return `${d.get('year')}-${d.get('month')}-${d.get('date')}-${d.get('hour')}`
-      case 'minute': return `${d.get('year')}-${d.get('month')}-${d.get('date')}-${d.get('hour')}-${d.get('minute')}`
-      case 'second': return `${d.get('year')}-${d.get('month')}-${d.get('date')}-${d.get('hour')}-${d.get('minute')}-${d.get('second')}`
+      case 'year':
+        return String(d.get('year'))
+      case 'month':
+        return `${d.get('year')}-${d.get('month')}`
+      case 'week':
+        return `${d.isoWeekYear()}-${d.isoWeek()}`
+      case 'day':
+        return `${d.get('year')}-${d.get('month')}-${d.get('date')}`
+      case 'hour':
+        return `${d.get('year')}-${d.get('month')}-${d.get('date')}-${d.get('hour')}`
+      case 'minute':
+        return `${d.get('year')}-${d.get('month')}-${d.get('date')}-${d.get('hour')}-${d.get('minute')}`
+      case 'second':
+        return `${d.get('year')}-${d.get('month')}-${d.get('date')}-${d.get('hour')}-${d.get('minute')}-${d.get('second')}`
     }
   }
 }

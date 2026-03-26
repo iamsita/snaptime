@@ -15,7 +15,7 @@ export const MS_PER_UNIT: Record<Unit, number> = {
   fortnight: 1_209_600_000,
   month: 2_592_000_000,
   year: 31_536_000_000,
-  unknown: NaN,
+  unknown: NaN
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -40,7 +40,7 @@ export const UNIT_ALIASES: Record<string, Unit> = {
   M: 'month',
   months: 'month',
   y: 'year',
-  years: 'year',
+  years: 'year'
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -48,22 +48,46 @@ export const UNIT_ALIASES: Record<string, Unit> = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const DEFAULT_MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
 ]
 
 export const DEFAULT_MONTHS_SHORT = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec'
 ]
 
 export const DEFAULT_WEEKDAYS = [
-  'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
+  'Sunday',
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday'
 ]
 
-export const DEFAULT_WEEKDAYS_SHORT = [
-  'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat',
-]
+export const DEFAULT_WEEKDAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Parse token → regex mapping
@@ -81,5 +105,5 @@ export const PARSE_TOKEN_RE: Record<string, string> = {
   x: '(-?\\d+)',
   DDD: '(\\d{1,3})',
   DDDD: '(\\d{3})',
-  Z: '([+-]\\d{2}:?\\d{2}|Z)',
+  Z: '([+-]\\d{2}:?\\d{2}|Z)'
 }

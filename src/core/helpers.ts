@@ -10,8 +10,17 @@ export function resolveUnit(input: string): Unit {
   if (canonical) return canonical
   // Already a canonical unit?
   const known: Unit[] = [
-    'millisecond', 'second', 'minute', 'hour',
-    'day', 'date', 'month', 'year', 'week', 'fortnight', 'unknown',
+    'millisecond',
+    'second',
+    'minute',
+    'hour',
+    'day',
+    'date',
+    'month',
+    'year',
+    'week',
+    'fortnight',
+    'unknown'
   ]
   if (known.includes(input as Unit)) return input as Unit
   return 'unknown'
@@ -66,7 +75,7 @@ export const LOCAL_GETTERS: Record<string, (d: Date) => number> = {
   hour: (d) => d.getHours(),
   minute: (d) => d.getMinutes(),
   second: (d) => d.getSeconds(),
-  millisecond: (d) => d.getMilliseconds(),
+  millisecond: (d) => d.getMilliseconds()
 }
 
 export const UTC_GETTERS: Record<string, (d: Date) => number> = {
@@ -77,25 +86,53 @@ export const UTC_GETTERS: Record<string, (d: Date) => number> = {
   hour: (d) => d.getUTCHours(),
   minute: (d) => d.getUTCMinutes(),
   second: (d) => d.getUTCSeconds(),
-  millisecond: (d) => d.getUTCMilliseconds(),
+  millisecond: (d) => d.getUTCMilliseconds()
 }
 
 export const LOCAL_SETTERS: Record<string, (d: Date, v: number) => void> = {
-  year: (d, v) => { d.setFullYear(v) },
-  month: (d, v) => { d.setMonth(v - 1) },
-  date: (d, v) => { d.setDate(v) },
-  hour: (d, v) => { d.setHours(v) },
-  minute: (d, v) => { d.setMinutes(v) },
-  second: (d, v) => { d.setSeconds(v) },
-  millisecond: (d, v) => { d.setMilliseconds(v) },
+  year: (d, v) => {
+    d.setFullYear(v)
+  },
+  month: (d, v) => {
+    d.setMonth(v - 1)
+  },
+  date: (d, v) => {
+    d.setDate(v)
+  },
+  hour: (d, v) => {
+    d.setHours(v)
+  },
+  minute: (d, v) => {
+    d.setMinutes(v)
+  },
+  second: (d, v) => {
+    d.setSeconds(v)
+  },
+  millisecond: (d, v) => {
+    d.setMilliseconds(v)
+  }
 }
 
 export const UTC_SETTERS: Record<string, (d: Date, v: number) => void> = {
-  year: (d, v) => { d.setUTCFullYear(v) },
-  month: (d, v) => { d.setUTCMonth(v - 1) },
-  date: (d, v) => { d.setUTCDate(v) },
-  hour: (d, v) => { d.setUTCHours(v) },
-  minute: (d, v) => { d.setUTCMinutes(v) },
-  second: (d, v) => { d.setUTCSeconds(v) },
-  millisecond: (d, v) => { d.setUTCMilliseconds(v) },
+  year: (d, v) => {
+    d.setUTCFullYear(v)
+  },
+  month: (d, v) => {
+    d.setUTCMonth(v - 1)
+  },
+  date: (d, v) => {
+    d.setUTCDate(v)
+  },
+  hour: (d, v) => {
+    d.setUTCHours(v)
+  },
+  minute: (d, v) => {
+    d.setUTCMinutes(v)
+  },
+  second: (d, v) => {
+    d.setUTCSeconds(v)
+  },
+  millisecond: (d, v) => {
+    d.setUTCMilliseconds(v)
+  }
 }

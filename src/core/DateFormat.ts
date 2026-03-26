@@ -11,23 +11,21 @@ import type {
   CalendarGridOptions,
   FiscalConfig,
   DateObject,
-  Inclusivity,
+  Inclusivity
 } from './types'
 import { MS_PER_UNIT, PARSE_TOKEN_RE } from './constants'
-import {
-  resolveUnit,
-  LOCAL_GETTERS,
-  UTC_GETTERS,
-  LOCAL_SETTERS,
-  UTC_SETTERS,
-} from './helpers'
+import { resolveUnit, LOCAL_GETTERS, UTC_GETTERS, LOCAL_SETTERS, UTC_SETTERS } from './helpers'
 import Duration from './Duration'
 
 // Formatting (pure functions — no circular dependency)
 import { formatDate, formatIntl, resolveLocale, type DateComponents } from '../format/formatting'
 
 // Serialization (pure functions)
-import { toRFC2822 as _toRFC2822, toRFC3339 as _toRFC3339, toExcel as _toExcel } from '../format/serializers'
+import {
+  toRFC2822 as _toRFC2822,
+  toRFC3339 as _toRFC3339,
+  toExcel as _toExcel
+} from '../format/serializers'
 
 // Relative time (pure functions)
 import {
@@ -35,7 +33,7 @@ import {
   calendarLabel,
   preciseDiff as _preciseDiff,
   age as _age,
-  countdown as _countdown,
+  countdown as _countdown
 } from '../format/relative'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -133,7 +131,9 @@ export default class DateFormat {
 
     const parts: Record<string, number | string> = {}
     const toks = cleanFmt.match(/YYYY|MM|DD|HH|hh|mm|ss|X|x|DDD|DDDD|Z/g) || []
-    toks.forEach((t, i) => { parts[t] = m[i + 1] })
+    toks.forEach((t, i) => {
+      parts[t] = m[i + 1]
+    })
 
     if (strict) {
       const mm = parts.MM != null ? Number(parts.MM) : null
@@ -159,8 +159,10 @@ export default class DateFormat {
     const sawOff = typeof parts.Z === 'string' && parts.Z !== 'Z' && parts.Z !== undefined
 
     const onlyDateTokens =
-      !cleanFmt.includes('H') && !cleanFmt.includes('h') &&
-      !cleanFmt.includes('m') && !cleanFmt.includes('s')
+      !cleanFmt.includes('H') &&
+      !cleanFmt.includes('h') &&
+      !cleanFmt.includes('m') &&
+      !cleanFmt.includes('s')
     if (strict && onlyDateTokens && !sawOff && !sawZ) {
       return new DateFormat(new Date(Y, Mo, D, 0, 0, 0), { utc: false })
     }
@@ -183,7 +185,9 @@ export default class DateFormat {
   static fromObject(obj: DateObject, opts: { utc?: boolean } = {}): DateFormat {
     const { year, month = 1, day = 1, hour = 0, minute = 0, second = 0, millisecond = 0 } = obj
     if (opts.utc) {
-      return new DateFormat(Date.UTC(year, month - 1, day, hour, minute, second, millisecond), { utc: true })
+      return new DateFormat(Date.UTC(year, month - 1, day, hour, minute, second, millisecond), {
+        utc: true
+      })
     }
     return new DateFormat(new Date(year, month - 1, day, hour, minute, second, millisecond))
   }
@@ -215,12 +219,24 @@ export default class DateFormat {
 
   // ── Core ────────────────────────────────────────────────────────────────
 
-  valueOf(): number { return this._d.getTime() }
-  unix(): number { return Math.floor(this.valueOf() / 1000) }
-  isValid(): boolean { return !isNaN(this._d.getTime()) }
-  isUtc(): boolean { return this._utc }
-  isLocal(): boolean { return !this._utc }
-  toDate(): Date { return new Date(this.valueOf()) }
+  valueOf(): number {
+    return this._d.getTime()
+  }
+  unix(): number {
+    return Math.floor(this.valueOf() / 1000)
+  }
+  isValid(): boolean {
+    return !isNaN(this._d.getTime())
+  }
+  isUtc(): boolean {
+    return this._utc
+  }
+  isLocal(): boolean {
+    return !this._utc
+  }
+  toDate(): Date {
+    return new Date(this.valueOf())
+  }
 
   clone(): DateFormat {
     return new DateFormat(this, { utc: this._utc })
@@ -271,8 +287,12 @@ export default class DateFormat {
 
   // ── Comparisons ─────────────────────────────────────────────────────────
 
-  isBefore(o: DateInput): boolean { return this.valueOf() < toDF(o).valueOf() }
-  isAfter(o: DateInput): boolean { return this.valueOf() > toDF(o).valueOf() }
+  isBefore(o: DateInput): boolean {
+    return this.valueOf() < toDF(o).valueOf()
+  }
+  isAfter(o: DateInput): boolean {
+    return this.valueOf() > toDF(o).valueOf()
+  }
 
   isSame(o: DateInput, unit?: UnitInput): boolean {
     if (!unit) return this.valueOf() === toDF(o).valueOf()
@@ -288,7 +308,12 @@ export default class DateFormat {
     return this.isSame(o, unit) || this.isAfter(o)
   }
 
-  isBetween(a: DateInput, b: DateInput, unit?: UnitInput, inclusivity: Inclusivity = '()'): boolean {
+  isBetween(
+    a: DateInput,
+    b: DateInput,
+    unit?: UnitInput,
+    inclusivity: Inclusivity = '()'
+  ): boolean {
     const self = unit ? this.startOf(resolveUnit(unit)).valueOf() : this.valueOf()
     const A = unit ? toDF(a).startOf(resolveUnit(unit)).valueOf() : toDF(a).valueOf()
     const B = unit ? toDF(b).startOf(resolveUnit(unit)).valueOf() : toDF(b).valueOf()
@@ -313,37 +338,74 @@ export default class DateFormat {
 
   // ── Weekday queries ─────────────────────────────────────────────────────
 
-  isWeekday(): boolean { const d = this.get('day'); return d !== 0 && d !== 6 }
-  isWeekend(): boolean { return !this.isWeekday() }
-  isSunday(): boolean { return this.get('day') === 0 }
-  isMonday(): boolean { return this.get('day') === 1 }
-  isTuesday(): boolean { return this.get('day') === 2 }
-  isWednesday(): boolean { return this.get('day') === 3 }
-  isThursday(): boolean { return this.get('day') === 4 }
-  isFriday(): boolean { return this.get('day') === 5 }
-  isSaturday(): boolean { return this.get('day') === 6 }
+  isWeekday(): boolean {
+    const d = this.get('day')
+    return d !== 0 && d !== 6
+  }
+  isWeekend(): boolean {
+    return !this.isWeekday()
+  }
+  isSunday(): boolean {
+    return this.get('day') === 0
+  }
+  isMonday(): boolean {
+    return this.get('day') === 1
+  }
+  isTuesday(): boolean {
+    return this.get('day') === 2
+  }
+  isWednesday(): boolean {
+    return this.get('day') === 3
+  }
+  isThursday(): boolean {
+    return this.get('day') === 4
+  }
+  isFriday(): boolean {
+    return this.get('day') === 5
+  }
+  isSaturday(): boolean {
+    return this.get('day') === 6
+  }
 
   // ── Temporal queries (DRY via private helpers) ──────────────────────────
 
   private _isSamePeriod(other: DateInput, unit: Unit | 'week' | 'quarter'): boolean {
     const o = toDF(other)
     switch (unit) {
-      case 'year': return this.get('year') === o.get('year')
-      case 'month': return this.get('year') === o.get('year') && this.get('month') === o.get('month')
-      case 'week': return this.isoWeek() === o.isoWeek() && this.get('year') === o.get('year')
-      case 'day': case 'date':
-        return this.get('year') === o.get('year') && this.get('month') === o.get('month') && this.get('date') === o.get('date')
-      case 'hour': return this._isSamePeriod(other, 'day') && this.get('hour') === o.get('hour')
-      case 'minute': return this._isSamePeriod(other, 'hour') && this.get('minute') === o.get('minute')
-      case 'second': return this._isSamePeriod(other, 'minute') && this.get('second') === o.get('second')
-      case 'quarter': return this.get('year') === o.get('year') && this.quarter() === o.quarter()
-      default: return this.valueOf() === o.valueOf()
+      case 'year':
+        return this.get('year') === o.get('year')
+      case 'month':
+        return this.get('year') === o.get('year') && this.get('month') === o.get('month')
+      case 'week':
+        return this.isoWeek() === o.isoWeek() && this.get('year') === o.get('year')
+      case 'day':
+      case 'date':
+        return (
+          this.get('year') === o.get('year') &&
+          this.get('month') === o.get('month') &&
+          this.get('date') === o.get('date')
+        )
+      case 'hour':
+        return this._isSamePeriod(other, 'day') && this.get('hour') === o.get('hour')
+      case 'minute':
+        return this._isSamePeriod(other, 'hour') && this.get('minute') === o.get('minute')
+      case 'second':
+        return this._isSamePeriod(other, 'minute') && this.get('second') === o.get('second')
+      case 'quarter':
+        return this.get('year') === o.get('year') && this.quarter() === o.quarter()
+      default:
+        return this.valueOf() === o.valueOf()
     }
   }
 
   private _isRelativePeriod(offset: number, unit: Unit | 'week' | 'quarter'): boolean {
     const now = this._now()
-    const target = offset === 0 ? now : (offset > 0 ? now.add(offset, unit as Unit) : now.subtract(-offset, unit as Unit))
+    const target =
+      offset === 0
+        ? now
+        : offset > 0
+          ? now.add(offset, unit as Unit)
+          : now.subtract(-offset, unit as Unit)
     return this._isSamePeriod(target, unit)
   }
 
@@ -352,97 +414,223 @@ export default class DateFormat {
   }
 
   private _isRelativeDivision(offset: number, divisor: number): boolean {
-    return Math.floor(this.get('year') / divisor) === Math.floor(this._now().get('year') / divisor) + offset
+    return (
+      Math.floor(this.get('year') / divisor) ===
+      Math.floor(this._now().get('year') / divisor) + offset
+    )
   }
 
   // Year
-  isSameYear(other: DateInput): boolean { return this._isSamePeriod(other, 'year') }
-  isCurrentYear(): boolean { return this._isRelativePeriod(0, 'year') }
-  isNextYear(): boolean { return this._isRelativePeriod(1, 'year') }
-  isLastYear(): boolean { return this._isRelativePeriod(-1, 'year') }
+  isSameYear(other: DateInput): boolean {
+    return this._isSamePeriod(other, 'year')
+  }
+  isCurrentYear(): boolean {
+    return this._isRelativePeriod(0, 'year')
+  }
+  isNextYear(): boolean {
+    return this._isRelativePeriod(1, 'year')
+  }
+  isLastYear(): boolean {
+    return this._isRelativePeriod(-1, 'year')
+  }
 
   // Month
-  isSameMonth(other: DateInput): boolean { return this._isSamePeriod(other, 'month') }
-  isCurrentMonth(): boolean { return this._isRelativePeriod(0, 'month') }
-  isNextMonth(): boolean { return this._isRelativePeriod(1, 'month') }
-  isLastMonth(): boolean { return this._isRelativePeriod(-1, 'month') }
+  isSameMonth(other: DateInput): boolean {
+    return this._isSamePeriod(other, 'month')
+  }
+  isCurrentMonth(): boolean {
+    return this._isRelativePeriod(0, 'month')
+  }
+  isNextMonth(): boolean {
+    return this._isRelativePeriod(1, 'month')
+  }
+  isLastMonth(): boolean {
+    return this._isRelativePeriod(-1, 'month')
+  }
 
   // Week
-  isSameWeek(other: DateInput): boolean { return this._isSamePeriod(other, 'week') }
-  isCurrentWeek(): boolean { return this._isRelativePeriod(0, 'week') }
-  isNextWeek(): boolean { return this._isRelativePeriod(1, 'week') }
-  isLastWeek(): boolean { return this._isRelativePeriod(-1, 'week') }
+  isSameWeek(other: DateInput): boolean {
+    return this._isSamePeriod(other, 'week')
+  }
+  isCurrentWeek(): boolean {
+    return this._isRelativePeriod(0, 'week')
+  }
+  isNextWeek(): boolean {
+    return this._isRelativePeriod(1, 'week')
+  }
+  isLastWeek(): boolean {
+    return this._isRelativePeriod(-1, 'week')
+  }
 
   // Day
-  isSameDay(other: DateInput): boolean { return this._isSamePeriod(other, 'day') }
-  isCurrentDay(): boolean { return this._isRelativePeriod(0, 'day') }
-  isNextDay(): boolean { return this._isRelativePeriod(1, 'day') }
-  isLastDay(): boolean { return this._isRelativePeriod(-1, 'day') }
-  isToday(): boolean { return this.isCurrentDay() }
-  isTomorrow(): boolean { return this.isNextDay() }
-  isYesterday(): boolean { return this.isLastDay() }
+  isSameDay(other: DateInput): boolean {
+    return this._isSamePeriod(other, 'day')
+  }
+  isCurrentDay(): boolean {
+    return this._isRelativePeriod(0, 'day')
+  }
+  isNextDay(): boolean {
+    return this._isRelativePeriod(1, 'day')
+  }
+  isLastDay(): boolean {
+    return this._isRelativePeriod(-1, 'day')
+  }
+  isToday(): boolean {
+    return this.isCurrentDay()
+  }
+  isTomorrow(): boolean {
+    return this.isNextDay()
+  }
+  isYesterday(): boolean {
+    return this.isLastDay()
+  }
 
   // Hour
-  isSameHour(other: DateInput): boolean { return this._isSamePeriod(other, 'hour') }
-  isCurrentHour(): boolean { return this._isRelativePeriod(0, 'hour') }
-  isNextHour(): boolean { return this._isRelativePeriod(1, 'hour') }
-  isLastHour(): boolean { return this._isRelativePeriod(-1, 'hour') }
+  isSameHour(other: DateInput): boolean {
+    return this._isSamePeriod(other, 'hour')
+  }
+  isCurrentHour(): boolean {
+    return this._isRelativePeriod(0, 'hour')
+  }
+  isNextHour(): boolean {
+    return this._isRelativePeriod(1, 'hour')
+  }
+  isLastHour(): boolean {
+    return this._isRelativePeriod(-1, 'hour')
+  }
 
   // Minute
-  isSameMinute(other: DateInput): boolean { return this._isSamePeriod(other, 'minute') }
-  isCurrentMinute(): boolean { return this._isRelativePeriod(0, 'minute') }
-  isNextMinute(): boolean { return this._isRelativePeriod(1, 'minute') }
-  isLastMinute(): boolean { return this._isRelativePeriod(-1, 'minute') }
+  isSameMinute(other: DateInput): boolean {
+    return this._isSamePeriod(other, 'minute')
+  }
+  isCurrentMinute(): boolean {
+    return this._isRelativePeriod(0, 'minute')
+  }
+  isNextMinute(): boolean {
+    return this._isRelativePeriod(1, 'minute')
+  }
+  isLastMinute(): boolean {
+    return this._isRelativePeriod(-1, 'minute')
+  }
 
   // Second
-  isSameSecond(other: DateInput): boolean { return this._isSamePeriod(other, 'second') }
-  isCurrentSecond(): boolean { return this._isRelativePeriod(0, 'second') }
-  isNextSecond(): boolean { return this._isRelativePeriod(1, 'second') }
-  isLastSecond(): boolean { return this._isRelativePeriod(-1, 'second') }
+  isSameSecond(other: DateInput): boolean {
+    return this._isSamePeriod(other, 'second')
+  }
+  isCurrentSecond(): boolean {
+    return this._isRelativePeriod(0, 'second')
+  }
+  isNextSecond(): boolean {
+    return this._isRelativePeriod(1, 'second')
+  }
+  isLastSecond(): boolean {
+    return this._isRelativePeriod(-1, 'second')
+  }
 
   // Millisecond
-  isSameMillisecond(other: DateInput): boolean { return this.valueOf() === toDF(other).valueOf() }
-  isCurrentMillisecond(): boolean { return this.valueOf() === this._now().valueOf() }
-  isNextMillisecond(): boolean { return this.valueOf() === this._now().valueOf() + 1 }
-  isLastMillisecond(): boolean { return this.valueOf() === this._now().valueOf() - 1 }
+  isSameMillisecond(other: DateInput): boolean {
+    return this.valueOf() === toDF(other).valueOf()
+  }
+  isCurrentMillisecond(): boolean {
+    return this.valueOf() === this._now().valueOf()
+  }
+  isNextMillisecond(): boolean {
+    return this.valueOf() === this._now().valueOf() + 1
+  }
+  isLastMillisecond(): boolean {
+    return this.valueOf() === this._now().valueOf() - 1
+  }
 
   // Microsecond aliases (JS Date has millisecond precision; these alias to millisecond)
-  isSameMicro(other: DateInput): boolean { return this.isSameMillisecond(other) }
-  isCurrentMicro(): boolean { return this.isCurrentMillisecond() }
-  isNextMicro(): boolean { return this.isNextMillisecond() }
-  isLastMicro(): boolean { return this.isLastMillisecond() }
-  isSameMicrosecond(other: DateInput): boolean { return this.isSameMillisecond(other) }
-  isCurrentMicrosecond(): boolean { return this.isCurrentMillisecond() }
-  isNextMicrosecond(): boolean { return this.isNextMillisecond() }
-  isLastMicrosecond(): boolean { return this.isLastMillisecond() }
+  isSameMicro(other: DateInput): boolean {
+    return this.isSameMillisecond(other)
+  }
+  isCurrentMicro(): boolean {
+    return this.isCurrentMillisecond()
+  }
+  isNextMicro(): boolean {
+    return this.isNextMillisecond()
+  }
+  isLastMicro(): boolean {
+    return this.isLastMillisecond()
+  }
+  isSameMicrosecond(other: DateInput): boolean {
+    return this.isSameMillisecond(other)
+  }
+  isCurrentMicrosecond(): boolean {
+    return this.isCurrentMillisecond()
+  }
+  isNextMicrosecond(): boolean {
+    return this.isNextMillisecond()
+  }
+  isLastMicrosecond(): boolean {
+    return this.isLastMillisecond()
+  }
 
   // Quarter
-  isSameQuarter(other: DateInput): boolean { return this._isSamePeriod(other, 'quarter') }
-  isCurrentQuarter(): boolean { return this._isRelativePeriod(0, 'quarter') }
-  isNextQuarter(): boolean { return this._isRelativePeriod(3, 'month') && !this.isCurrentQuarter() }
-  isLastQuarter(): boolean { return this._isRelativePeriod(-3, 'month') && !this.isCurrentQuarter() }
+  isSameQuarter(other: DateInput): boolean {
+    return this._isSamePeriod(other, 'quarter')
+  }
+  isCurrentQuarter(): boolean {
+    return this._isRelativePeriod(0, 'quarter')
+  }
+  isNextQuarter(): boolean {
+    return this._isRelativePeriod(3, 'month') && !this.isCurrentQuarter()
+  }
+  isLastQuarter(): boolean {
+    return this._isRelativePeriod(-3, 'month') && !this.isCurrentQuarter()
+  }
 
   // Decade / Century / Millennium
-  isSameDecade(other: DateInput): boolean { return this._isSameDivision(other, 10) }
-  isCurrentDecade(): boolean { return this._isRelativeDivision(0, 10) }
-  isNextDecade(): boolean { return this._isRelativeDivision(1, 10) }
-  isLastDecade(): boolean { return this._isRelativeDivision(-1, 10) }
+  isSameDecade(other: DateInput): boolean {
+    return this._isSameDivision(other, 10)
+  }
+  isCurrentDecade(): boolean {
+    return this._isRelativeDivision(0, 10)
+  }
+  isNextDecade(): boolean {
+    return this._isRelativeDivision(1, 10)
+  }
+  isLastDecade(): boolean {
+    return this._isRelativeDivision(-1, 10)
+  }
 
-  isSameCentury(other: DateInput): boolean { return this._isSameDivision(other, 100) }
-  isCurrentCentury(): boolean { return this._isRelativeDivision(0, 100) }
-  isNextCentury(): boolean { return this._isRelativeDivision(1, 100) }
-  isLastCentury(): boolean { return this._isRelativeDivision(-1, 100) }
+  isSameCentury(other: DateInput): boolean {
+    return this._isSameDivision(other, 100)
+  }
+  isCurrentCentury(): boolean {
+    return this._isRelativeDivision(0, 100)
+  }
+  isNextCentury(): boolean {
+    return this._isRelativeDivision(1, 100)
+  }
+  isLastCentury(): boolean {
+    return this._isRelativeDivision(-1, 100)
+  }
 
-  isSameMillennium(other: DateInput): boolean { return this._isSameDivision(other, 1000) }
-  isCurrentMillennium(): boolean { return this._isRelativeDivision(0, 1000) }
-  isNextMillennium(): boolean { return this._isRelativeDivision(1, 1000) }
-  isLastMillennium(): boolean { return this._isRelativeDivision(-1, 1000) }
+  isSameMillennium(other: DateInput): boolean {
+    return this._isSameDivision(other, 1000)
+  }
+  isCurrentMillennium(): boolean {
+    return this._isRelativeDivision(0, 1000)
+  }
+  isNextMillennium(): boolean {
+    return this._isRelativeDivision(1, 1000)
+  }
+  isLastMillennium(): boolean {
+    return this._isRelativeDivision(-1, 1000)
+  }
 
   // ── UTC / Local conversion ──────────────────────────────────────────────
 
   utc(): DateFormat {
     const c = this.clone()
-    Object.defineProperty(c, '_utc', { value: true, writable: false, enumerable: true, configurable: true })
+    Object.defineProperty(c, '_utc', {
+      value: true,
+      writable: false,
+      enumerable: true,
+      configurable: true
+    })
     return c
   }
 
@@ -453,14 +641,18 @@ export default class DateFormat {
 
   // ── Calendar info ───────────────────────────────────────────────────────
 
-  daysInMonth(): number { return new Date(this.get('year'), this.get('month'), 0).getDate() }
+  daysInMonth(): number {
+    return new Date(this.get('year'), this.get('month'), 0).getDate()
+  }
 
   dayOfYear(): number {
     const start = DateFormat.parse(`${this.get('year')}-01-01`, 'YYYY-MM-DD', true)
     return Math.floor((this.valueOf() - start.valueOf()) / 864e5) + 1
   }
 
-  weekday(): number { return this.get('day') }
+  weekday(): number {
+    return this.get('day')
+  }
 
   isoWeek(): number {
     const d = new Date(this._utc ? this.valueOf() : this.local().valueOf())
@@ -476,42 +668,64 @@ export default class DateFormat {
     return d.getFullYear()
   }
 
-  week(): number { return this.isoWeek() }
+  week(): number {
+    return this.isoWeek()
+  }
 
   weeksInYear(): number {
     const lastDay = new Date(this.get('year'), 11, 31)
     return new DateFormat(lastDay).isoWeek() === 1 ? 52 : 53
   }
 
-  quarter(): number { return Math.ceil(this.get('month') / 3) }
+  quarter(): number {
+    return Math.ceil(this.get('month') / 3)
+  }
 
   // ── Start / End of period ───────────────────────────────────────────────
 
   startOf(u: UnitInput | 'week' | 'quarter'): DateFormat {
     const d = this.clone()
     switch (u) {
-      case 'year': case 'y': case 'years':
+      case 'year':
+      case 'y':
+      case 'years':
         return d.set('month', 1).set('date', 1).startOf('day')
-      case 'month': case 'M': case 'months':
+      case 'month':
+      case 'M':
+      case 'months':
         return d.set('date', 1).startOf('day')
-      case 'week': case 'w': case 'weeks':
+      case 'week':
+      case 'w':
+      case 'weeks':
         return d.subtract(d.get('day'), 'day').startOf('day')
       case 'quarter':
         return d.set('month', Math.floor((d.get('month') - 1) / 3) * 3 + 1).startOf('month')
-      case 'day': case 'd': case 'days': case 'date':
+      case 'day':
+      case 'd':
+      case 'days':
+      case 'date':
         return d.set('hour', 0).set('minute', 0).set('second', 0).set('millisecond', 0)
-      case 'hour': case 'h': case 'hours':
+      case 'hour':
+      case 'h':
+      case 'hours':
         return d.set('minute', 0).set('second', 0).set('millisecond', 0)
-      case 'minute': case 'm': case 'minutes':
+      case 'minute':
+      case 'm':
+      case 'minutes':
         return d.set('second', 0).set('millisecond', 0)
-      case 'second': case 's': case 'seconds':
+      case 'second':
+      case 's':
+      case 'seconds':
         return d.set('millisecond', 0)
-      default: return d
+      default:
+        return d
     }
   }
 
   endOf(u: UnitInput | 'week' | 'quarter'): DateFormat {
-    return this.startOf(u).add(1, u as Unit).subtract(1, 'millisecond')
+    return this.startOf(u)
+      .add(1, u as Unit)
+      .subtract(1, 'millisecond')
   }
 
   // ── Formatting (delegates to formatting.ts) ─────────────────────────────
@@ -534,7 +748,7 @@ export default class DateFormat {
       dayOfYear: this.dayOfYear(),
       isoWeek: this.isoWeek(),
       isoWeekYear: this.isoWeekYear(),
-      nativeDate: this._d,
+      nativeDate: this._d
     }
   }
 
@@ -561,21 +775,39 @@ export default class DateFormat {
       this._now().startOf('day').valueOf(),
       this.format('hh:mm A'),
       this.format('YYYY-MM-DD'),
-      loc.calendar,
+      loc.calendar
     )
   }
 
   // ── Serialization (delegates to serializers.ts) ─────────────────────────
 
-  toISOString(): string { return new Date(this.valueOf()).toISOString() }
-  toJSON(): string { return this.toISOString() }
-  toMillis(): number { return this.valueOf() }
-  toRFC2822(): string { return _toRFC2822(this._d) }
-  toRFC3339(): string { return _toRFC3339(this._d) }
-  toExcel(): number { return _toExcel(this.valueOf()) }
-  toSQL(): string { return this.format('YYYY-MM-DD HH:mm:ss') }
-  toSQLDate(): string { return this.format('YYYY-MM-DD') }
-  toSQLTime(): string { return this.format('HH:mm:ss') }
+  toISOString(): string {
+    return new Date(this.valueOf()).toISOString()
+  }
+  toJSON(): string {
+    return this.toISOString()
+  }
+  toMillis(): number {
+    return this.valueOf()
+  }
+  toRFC2822(): string {
+    return _toRFC2822(this._d)
+  }
+  toRFC3339(): string {
+    return _toRFC3339(this._d)
+  }
+  toExcel(): number {
+    return _toExcel(this.valueOf())
+  }
+  toSQL(): string {
+    return this.format('YYYY-MM-DD HH:mm:ss')
+  }
+  toSQLDate(): string {
+    return this.format('YYYY-MM-DD')
+  }
+  toSQLTime(): string {
+    return this.format('HH:mm:ss')
+  }
 
   toString(): string {
     return this.isValid() ? this.toISOString() : 'Invalid Date'
@@ -583,9 +815,13 @@ export default class DateFormat {
 
   toObject() {
     return {
-      year: this.get('year'), month: this.get('month'), date: this.get('date'),
-      hour: this.get('hour'), minute: this.get('minute'), second: this.get('second'),
-      millisecond: this.get('millisecond'),
+      year: this.get('year'),
+      month: this.get('month'),
+      date: this.get('date'),
+      hour: this.get('hour'),
+      minute: this.get('minute'),
+      second: this.get('second'),
+      millisecond: this.get('millisecond')
     }
   }
 
@@ -599,10 +835,27 @@ export default class DateFormat {
     const prevMonth = new DateFormat(new Date(b.get('year'), b.get('month') - 2, 1))
 
     return _preciseDiff(
-      a.valueOf(), b.valueOf(),
-      { year: a.get('year'), month: a.get('month'), date: a.get('date'), hour: a.get('hour'), minute: a.get('minute'), second: a.get('second'), millisecond: a.get('millisecond') },
-      { year: b.get('year'), month: b.get('month'), date: b.get('date'), hour: b.get('hour'), minute: b.get('minute'), second: b.get('second'), millisecond: b.get('millisecond') },
-      prevMonth.daysInMonth(),
+      a.valueOf(),
+      b.valueOf(),
+      {
+        year: a.get('year'),
+        month: a.get('month'),
+        date: a.get('date'),
+        hour: a.get('hour'),
+        minute: a.get('minute'),
+        second: a.get('second'),
+        millisecond: a.get('millisecond')
+      },
+      {
+        year: b.get('year'),
+        month: b.get('month'),
+        date: b.get('date'),
+        hour: b.get('hour'),
+        minute: b.get('minute'),
+        second: b.get('second'),
+        millisecond: b.get('millisecond')
+      },
+      prevMonth.daysInMonth()
     )
   }
 
@@ -635,16 +888,31 @@ export default class DateFormat {
 
     for (let i = startPad - 1; i >= 0; i--) {
       const d = firstDay.subtract(i + 1, 'day').startOf('day')
-      cells.push({ date: d, isCurrentMonth: false, isToday: d.isSameDay(today), isWeekend: d.isWeekend() })
+      cells.push({
+        date: d,
+        isCurrentMonth: false,
+        isToday: d.isSameDay(today),
+        isWeekend: d.isWeekend()
+      })
     }
     for (let day = 1; day <= dim; day++) {
       const d = new DateFormat(new Date(year, month - 1, day))
-      cells.push({ date: d, isCurrentMonth: true, isToday: d.isSameDay(today), isWeekend: d.isWeekend() })
+      cells.push({
+        date: d,
+        isCurrentMonth: true,
+        isToday: d.isSameDay(today),
+        isWeekend: d.isWeekend()
+      })
     }
     let nextDay = 1
     while (cells.length < 42) {
       const d = new DateFormat(new Date(year, month, nextDay++))
-      cells.push({ date: d, isCurrentMonth: false, isToday: d.isSameDay(today), isWeekend: d.isWeekend() })
+      cells.push({
+        date: d,
+        isCurrentMonth: false,
+        isToday: d.isSameDay(today),
+        isWeekend: d.isWeekend()
+      })
     }
 
     const grid: CalendarCell<DateFormat>[][] = []

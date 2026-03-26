@@ -16,7 +16,8 @@ export default defineConfig([
   {
     ignores: [
       "docs/.vitepress/dist/**",
-      "docs/.vitepress/cache/**"
+      "docs/.vitepress/cache/**",
+      "test/typecheck*.ts"
     ]
   },
   tseslint.configs.recommended,

@@ -20,7 +20,7 @@ import d8, {
   businessDaysBetween,
   getHolidays,
   resolveUnit,
-  dateFormat,
+  dateFormat
 } from '../src/index'
 
 import type {
@@ -47,7 +47,7 @@ import type {
   FiscalConfig,
   CronField,
   DateFormatStatic,
-  DateFormatLike,
+  DateFormatLike
 } from '../src/index'
 
 // ── Factory function ──────────────────────────────────────────────────────────
@@ -249,7 +249,7 @@ const _re: boolean = range.equals(range)
 
 const col = d8.collection(['2026-01-01', '2026-06-15', '2026-12-31'])
 const sorted: DateCollection = col.sort('asc')
-const filtered: DateCollection = col.filter(d => d.isWeekday())
+const filtered: DateCollection = col.filter((d) => d.isWeekday())
 const unique: DateCollection = col.unique('day')
 const compact: DateCollection = col.compact()
 const merged: DateCollection = col.merge(col)
@@ -262,17 +262,20 @@ const last: DateFormat = col.last()
 const nth: DateFormat = col.nth(0)
 const min: DateFormat = col.min()
 const max: DateFormat = col.max()
-const found: DateFormat | undefined = col.find(d => d.isFriday())
+const found: DateFormat | undefined = col.find((d) => d.isFriday())
 
 const count: number = col.count()
 const empty: boolean = col.isEmpty()
 const span: DateRange = col.span()
 
-const mapped: string[] = col.map(d => d.format())
-col.forEach((d, i) => { const _: string = d.format(); const _i: number = i })
+const mapped: string[] = col.map((d) => d.format())
+col.forEach((d, i) => {
+  const _: string = d.format()
+  const _i: number = i
+})
 const reduced: number = col.reduce((sum, d) => sum + d.get('year'), 0)
-const _some: boolean = col.some(d => d.isWeekend())
-const _every: boolean = col.every(d => d.isValid())
+const _some: boolean = col.some((d) => d.isWeekend())
+const _every: boolean = col.every((d) => d.isValid())
 
 // Iterable
 for (const _d of col) {
@@ -340,7 +343,17 @@ const _fc: FiscalConfig = { startMonth: 4 }
 void [a, b, c, d, e, _same, parsed, fromObj, fromObjUtc, minD, maxD, dur, durAlias]
 void [ms, unix, valid, utc, local, date, cloned, year, day, withHour, withAlias]
 void [added, addedAlias, subtracted, subtractedAlias, diffMs, diffDays, diffFloat]
-void [before, after, same, sameDay, sameOrBefore, sameOrAfter, between, betweenInclusive, betweenUnit]
+void [
+  before,
+  after,
+  same,
+  sameDay,
+  sameOrBefore,
+  sameOrAfter,
+  between,
+  betweenInclusive,
+  betweenUnit
+]
 void [_sun, _mon, _weekday, _weekend, _sameYear, _currYear, _today, _tomorrow, _yesterday]
 void [formatted, escaped, intl, fromNow, cal, iso, json, millis, rfc2822, rfc3339]
 void [sql, sqlDate, sqlTime, excel, str, obj, _objYear, pdiff, _humanized, _years]
@@ -348,10 +361,41 @@ void [ageResult, _ageStr, cd, _cdFormat, _cdHumanize, grid, gridMon, _cell, _cel
 void [fy, fq, sod, eod, sow, soq, utcD, localD, dim, doy, iw, iwy, wiy, q, leap, dst]
 void [d1, d2, d3, d4, _asHours, _asAlias, _added, _subbed]
 void [_toMs, _toSec, _toMin, _toHr, _toDay, _toWk, _toMo, _toYr]
-void [_isZero, _isNeg, _isPos, _abs, _neg, _eq, _lt, _gt, _lte, _gte, _isoStr, _humShort, _humLong, _fmt]
+void [
+  _isZero,
+  _isNeg,
+  _isPos,
+  _abs,
+  _neg,
+  _eq,
+  _lt,
+  _gt,
+  _lte,
+  _gte,
+  _isoStr,
+  _humShort,
+  _humLong,
+  _fmt
+]
 void [range, _rv, _rf, _rd, _rc, _ro, _ri, _rm, _rs, _ra, _rh, _re]
 void [col, sorted, filtered, unique, compact, merged, betweenCol, closest, farthest]
-void [first, last, nth, min, max, found, count, empty, span, mapped, reduced, _some, _every, spread, grouped]
+void [
+  first,
+  last,
+  nth,
+  min,
+  max,
+  found,
+  count,
+  empty,
+  span,
+  mapped,
+  reduced,
+  _some,
+  _every,
+  spread,
+  grouped
+]
 void [tz2, _guess, _isValidTz, _offMin, _offStr, _tzFmt, _isDst, _tzLocal]
 void [cron, _matches, _next, _prev, _cronBetween, _cronHumanize]
 void [nlResult, nlDirect, _isBd, _addBd, _subBd, _nextBd, _prevBd, _bdBetween, _holidays, resolved]
