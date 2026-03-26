@@ -2,7 +2,7 @@
 // Core time units
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** All supported time units */
+/** All supported canonical time units */
 export type Unit =
   | 'millisecond'
   | 'second'
@@ -16,12 +16,49 @@ export type Unit =
   | 'unknown'
   | 'week'
 
+/**
+ * Accepted unit input — canonical units plus common aliases.
+ * Resolved to a canonical Unit via resolveUnit().
+ */
+export type UnitInput =
+  | Unit
+  | 'ms' | 'milliseconds'
+  | 's' | 'seconds'
+  | 'm' | 'minutes'
+  | 'h' | 'hours'
+  | 'd' | 'days'
+  | 'D' | 'dates'
+  | 'w' | 'weeks'
+  | 'M' | 'months'
+  | 'y' | 'years'
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Date input — the universal input type accepted by most APIs
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Any value that can be converted to a DateFormat instance.
+ * Use this instead of repeating `string | number | Date | DateFormat` everywhere.
+ */
+// Forward-reference friendly: DateFormat is checked via duck-typing at runtime
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface DateFormatLike {
+  valueOf(): number
+  isValid(): boolean
+  get(u: Unit | 'day'): number
+}
+
+export type DateInput = string | number | Date | DateFormatLike
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared primitive types
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type SortOrder = 'asc' | 'desc'
 export type WeekStart = 'sunday' | 'monday'
+
+/** Inclusivity for isBetween: '()' exclusive, '[]' inclusive, '[)' start-inclusive, '(]' end-inclusive */
+export type Inclusivity = '()' | '[]' | '[)' | '(]'
 
 /** Units usable for range iteration and splitting */
 export type RangeIterateUnit =
@@ -173,8 +210,22 @@ export interface CalendarGridOptions {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface FiscalConfig {
-  /** Month the fiscal year starts: 1–12 (default 1 = January) */
+  /** Month the fiscal year starts: 1-12 (default 1 = January) */
   startMonth: number
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Date object input (for DateFormat.fromObject)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface DateObject {
+  year: number
+  month?: number
+  day?: number
+  hour?: number
+  minute?: number
+  second?: number
+  millisecond?: number
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -187,15 +238,16 @@ export interface CronField {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Factory static interface  (DateFormat/Duration referenced by import in index.ts)
+// Factory static interface
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface DateFormatStatic {
-  (input?: string | number | Date | unknown, opts?: { utc?: boolean }): unknown
-  parse(str: string, fmt: string, strict?: boolean): unknown
-  min(...args: (string | number | Date | unknown)[]): unknown
-  max(...args: (string | number | Date | unknown)[]): unknown
-  duration(n: number, unit: Unit): unknown
+  (input?: DateInput, opts?: { utc?: boolean }): DateFormatLike
+  parse(str: string, fmt: string, strict?: boolean): DateFormatLike
+  min(...args: DateInput[]): DateFormatLike
+  max(...args: DateInput[]): DateFormatLike
+  duration(n: number, unit: UnitInput): unknown
   locale(name: string, data?: LocaleData): void
   use(plugin: PluginFn): unknown
+  fromObject(obj: DateObject, opts?: { utc?: boolean }): DateFormatLike
 }

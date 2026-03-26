@@ -1,6 +1,7 @@
-import type { Unit } from './type'
+import type { UnitInput } from './type'
+import { MS_PER_UNIT } from './constants'
+import { resolveUnit, pad, pluralize } from './helpers'
 
-/** A length of time with parse/add/subtract/humanize/format */
 export default class Duration {
   private _ms: number
 
@@ -8,110 +9,102 @@ export default class Duration {
     this._ms = ms
   }
 
-  // ── Static ───────────────────────────────────────────────────────────────────
+  // ── Static constructors ─────────────────────────────────────────────────
 
-  private static readonly MS_PER_UNIT: Partial<Record<Unit, number>> = {
-    millisecond: 1,
-    second: 1_000,
-    minute: 60_000,
-    hour: 3_600_000,
-    day: 86_400_000,
-    date: 86_400_000,
-    week: 604_800_000,
-    fortnight: 1_209_600_000,
-    month: 2_592_000_000,
-    year: 31_536_000_000
-  }
-
+  /**
+   * Parse a human-friendly duration string.
+   * Supports: "2h30m", "1d", "3w", "500ms", "1.5h"
+   */
   static parse(input: string): Duration {
     const re = /(\d+(?:\.\d+)?)(ms|[YyMwdhms])/g
-    let total = 0,
-      m: RegExpExecArray | null
+    let total = 0
+    let m: RegExpExecArray | null
     while ((m = re.exec(input))) {
       const v = parseFloat(m[1])
       switch (m[2]) {
-        case 'Y':
-        case 'y':
-          total += v * 365 * 24 * 3600 * 1000
-          break
-        case 'M':
-          total += v * 30 * 24 * 3600 * 1000
-          break
-        case 'w':
-          total += v * 7 * 24 * 3600 * 1000
-          break
-        case 'd':
-          total += v * 24 * 3600 * 1000
-          break
-        case 'h':
-          total += v * 3600 * 1000
-          break
-        case 'm':
-          total += v * 60 * 1000
-          break
-        case 's':
-          total += v * 1000
-          break
-        case 'ms':
-          total += v
-          break
+        case 'Y': case 'y': total += v * MS_PER_UNIT.year; break
+        case 'M': total += v * MS_PER_UNIT.month; break
+        case 'w': total += v * MS_PER_UNIT.week; break
+        case 'd': total += v * MS_PER_UNIT.day; break
+        case 'h': total += v * MS_PER_UNIT.hour; break
+        case 'm': total += v * MS_PER_UNIT.minute; break
+        case 's': total += v * MS_PER_UNIT.second; break
+        case 'ms': total += v; break
       }
     }
     return new Duration(total)
   }
 
-  // ── Core ─────────────────────────────────────────────────────────────────────
+  /**
+   * Parse an ISO 8601 duration string.
+   * Format: P[nY][nM][nW][nD][T[nH][nM][nS]]
+   * @example Duration.fromISO('P1Y2M3DT4H5M6S')
+   * @example Duration.fromISO('PT30M')
+   * @example Duration.fromISO('P2W')
+   */
+  static fromISO(input: string): Duration {
+    const re = /^P(?:(\d+(?:\.\d+)?)Y)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)W)?(?:(\d+(?:\.\d+)?)D)?(?:T(?:(\d+(?:\.\d+)?)H)?(?:(\d+(?:\.\d+)?)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
+    const m = re.exec(input)
+    if (!m) throw new Error(`Invalid ISO 8601 duration: "${input}"`)
 
-  as(unit: Unit): number {
-    const map: Record<Unit, number> = {
-      millisecond: 1,
-      second: 1e3,
-      minute: 6e4,
-      hour: 36e5,
-      day: 864e5,
-      date: 864e5,
-      month: 2592e6, // ~30 days
-      year: 31536e6, // ~365 days
-      fortnight: 1209.6e6, // 14 days
-      unknown: NaN,
-      week: 6048e5 // 7 days
-    }
-    return this._ms / (map[unit] ?? 1)
+    let total = 0
+    if (m[1]) total += parseFloat(m[1]) * MS_PER_UNIT.year
+    if (m[2]) total += parseFloat(m[2]) * MS_PER_UNIT.month
+    if (m[3]) total += parseFloat(m[3]) * MS_PER_UNIT.week
+    if (m[4]) total += parseFloat(m[4]) * MS_PER_UNIT.day
+    if (m[5]) total += parseFloat(m[5]) * MS_PER_UNIT.hour
+    if (m[6]) total += parseFloat(m[6]) * MS_PER_UNIT.minute
+    if (m[7]) total += parseFloat(m[7]) * MS_PER_UNIT.second
+
+    return new Duration(total)
   }
 
-  add(n: number, unit: Unit): Duration {
-    const ms = Duration.MS_PER_UNIT[unit]
-    if (ms === undefined) throw new Error(`Cannot add/subtract unit "${unit}"`)
+  /**
+   * Create a Duration between two timestamps (absolute difference).
+   */
+  static between(a: number | Date, b: number | Date): Duration {
+    const msA = typeof a === 'number' ? a : a.getTime()
+    const msB = typeof b === 'number' ? b : b.getTime()
+    return new Duration(Math.abs(msB - msA))
+  }
+
+  // ── Core ────────────────────────────────────────────────────────────────
+
+  /** Convert the duration to a specific unit (fractional). */
+  as(unit: UnitInput): number {
+    const canonical = resolveUnit(unit)
+    const divisor = MS_PER_UNIT[canonical]
+    if (canonical === 'unknown') {
+      // Explicit 'unknown' unit → NaN; unrecognized strings fall back to dividing by 1
+      return (unit as string) === 'unknown' ? NaN : this._ms
+    }
+    return this._ms / (divisor ?? 1)
+  }
+
+  add(n: number, unit: UnitInput): Duration {
+    const canonical = resolveUnit(unit)
+    if (canonical === 'unknown') throw new Error(`Cannot add/subtract unit "${unit}"`)
+    const ms = MS_PER_UNIT[canonical]
+    if (ms === undefined || isNaN(ms)) throw new Error(`Cannot add/subtract unit "${unit}"`)
     return new Duration(this._ms + n * ms)
   }
 
-  subtract(n: number, unit: Unit): Duration {
+  subtract(n: number, unit: UnitInput): Duration {
     return this.add(-n, unit)
   }
 
-  // ── Convenience aliases ───────────────────────────────────────────────────────
+  // ── Convenience getters ─────────────────────────────────────────────────
 
-  toMilliseconds(): number {
-    return this.as('millisecond')
-  }
+  toMilliseconds(): number { return this.as('millisecond') }
+  toSeconds(): number { return this.as('second') }
+  toMinutes(): number { return this.as('minute') }
+  toHours(): number { return this.as('hour') }
+  toDays(): number { return this.as('day') }
+  toWeeks(): number { return this.as('week') }
+  toMonths(): number { return this.as('month') }
+  toYears(): number { return this.as('year') }
 
-  toSeconds(): number {
-    return this.as('second')
-  }
-
-  toMinutes(): number {
-    return this.as('minute')
-  }
-
-  toHours(): number {
-    return this.as('hour')
-  }
-
-  toDays(): number {
-    return this.as('day')
-  }
-
-  // ── Value / inspection ────────────────────────────────────────────────────────
+  // ── Value / inspection ──────────────────────────────────────────────────
 
   valueOf(): number {
     return this._ms
@@ -125,11 +118,64 @@ export default class Duration {
     return this._ms < 0
   }
 
+  isPositive(): boolean {
+    return this._ms > 0
+  }
+
   abs(): Duration {
     return new Duration(Math.abs(this._ms))
   }
 
-  // ── Humanize / format ─────────────────────────────────────────────────────────
+  negate(): Duration {
+    return new Duration(-this._ms)
+  }
+
+  // ── Comparison ──────────────────────────────────────────────────────────
+
+  equals(other: Duration): boolean {
+    return this._ms === other.valueOf()
+  }
+
+  lessThan(other: Duration): boolean {
+    return this._ms < other.valueOf()
+  }
+
+  greaterThan(other: Duration): boolean {
+    return this._ms > other.valueOf()
+  }
+
+  lessThanOrEqual(other: Duration): boolean {
+    return this._ms <= other.valueOf()
+  }
+
+  greaterThanOrEqual(other: Duration): boolean {
+    return this._ms >= other.valueOf()
+  }
+
+  // ── ISO 8601 serialization ──────────────────────────────────────────────
+
+  /**
+   * Serialize as ISO 8601 duration string.
+   * @example new Duration(90_061_000).toISO() // "PT25H1M1S"
+   */
+  toISO(): string {
+    const ms = Math.abs(this._ms)
+    const hours = Math.floor(ms / MS_PER_UNIT.hour)
+    const minutes = Math.floor((ms % MS_PER_UNIT.hour) / MS_PER_UNIT.minute)
+    const seconds = Math.floor((ms % MS_PER_UNIT.minute) / MS_PER_UNIT.second)
+    const parts: string[] = ['P']
+    if (hours || minutes || seconds) {
+      parts.push('T')
+      if (hours) parts.push(`${hours}H`)
+      if (minutes) parts.push(`${minutes}M`)
+      if (seconds) parts.push(`${seconds}S`)
+    } else {
+      parts.push('T0S')
+    }
+    return (this._ms < 0 ? '-' : '') + parts.join('')
+  }
+
+  // ── Humanize / format ───────────────────────────────────────────────────
 
   /**
    * Human-readable representation.
@@ -151,9 +197,6 @@ export default class Duration {
       return `${Math.round(d)}d`
     }
 
-    // Long form: multi-unit breakdown
-    const parts: string[] = []
-
     const totalSec = Math.floor(ms / 1000)
     const days = Math.floor(totalSec / 86400)
     const hours = Math.floor((totalSec % 86400) / 3600)
@@ -161,12 +204,12 @@ export default class Duration {
     const seconds = totalSec % 60
     const milliseconds = Math.floor(ms % 1000)
 
-    if (days > 0) parts.push(`${days} ${days === 1 ? 'day' : 'days'}`)
-    if (hours > 0) parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`)
-    if (minutes > 0) parts.push(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`)
-    if (seconds > 0) parts.push(`${seconds} ${seconds === 1 ? 'second' : 'seconds'}`)
-    if (milliseconds > 0 && parts.length === 0)
-      parts.push(`${milliseconds} ${milliseconds === 1 ? 'millisecond' : 'milliseconds'}`)
+    const parts: string[] = []
+    if (days > 0) parts.push(pluralize(days, 'day'))
+    if (hours > 0) parts.push(pluralize(hours, 'hour'))
+    if (minutes > 0) parts.push(pluralize(minutes, 'minute'))
+    if (seconds > 0) parts.push(pluralize(seconds, 'second'))
+    if (milliseconds > 0 && parts.length === 0) parts.push(pluralize(milliseconds, 'millisecond'))
 
     return parts.join(', ') || '0 milliseconds'
   }
@@ -183,12 +226,12 @@ export default class Duration {
     const S = Math.floor(ms % 1000)
 
     return fmt
-      .replace(/HH/g, String(H).padStart(2, '0'))
+      .replace(/HH/g, pad(H))
       .replace(/H(?!H)/g, String(H))
-      .replace(/mm/g, String(m).padStart(2, '0'))
+      .replace(/mm/g, pad(m))
       .replace(/m(?!m)/g, String(m))
-      .replace(/ss/g, String(s).padStart(2, '0'))
+      .replace(/ss/g, pad(s))
       .replace(/s(?!s)/g, String(s))
-      .replace(/SSS/g, String(S).padStart(3, '0'))
+      .replace(/SSS/g, pad(S, 3))
   }
 }

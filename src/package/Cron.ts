@@ -1,5 +1,5 @@
 import DateFormat from './DateFormat'
-import type { CronField } from './type'
+import type { CronField, DateInput } from './type'
 
 const DAY_ABBR: Record<string, number> = {
   SUN: 0,
@@ -118,7 +118,8 @@ export default class Cron {
     this.dow = parseField(parts[4], 0, 6, true)
   }
 
-  matches(date: DateFormat): boolean {
+  matches(date: DateInput): boolean {
+    if (!(date instanceof DateFormat)) date = new DateFormat(date as string | number | Date)
     const min = date.get('minute')
     const hr = date.get('hour')
     const d = date.get('date')
@@ -141,8 +142,9 @@ export default class Cron {
     return domMatch && dowMatch
   }
 
-  next(from?: DateFormat): DateFormat {
-    let cursor = (from ?? new DateFormat()).set('second', 0).set('millisecond', 0).add(1, 'minute')
+  next(from?: DateInput): DateFormat {
+    const start = from ? (from instanceof DateFormat ? from : new DateFormat(from as string | number | Date)) : new DateFormat()
+    let cursor = start.set('second', 0).set('millisecond', 0).add(1, 'minute')
 
     for (let i = 0; i < MAX_ITER_MINUTES; i++) {
       if (this.matches(cursor)) return cursor
@@ -152,11 +154,9 @@ export default class Cron {
     throw new Error('No matching date found within 366 days')
   }
 
-  prev(from?: DateFormat): DateFormat {
-    let cursor = (from ?? new DateFormat())
-      .set('second', 0)
-      .set('millisecond', 0)
-      .subtract(1, 'minute')
+  prev(from?: DateInput): DateFormat {
+    const start = from ? (from instanceof DateFormat ? from : new DateFormat(from as string | number | Date)) : new DateFormat()
+    let cursor = start.set('second', 0).set('millisecond', 0).subtract(1, 'minute')
 
     for (let i = 0; i < MAX_ITER_MINUTES; i++) {
       if (this.matches(cursor)) return cursor
@@ -166,16 +166,18 @@ export default class Cron {
     throw new Error('No matching date found within 366 days')
   }
 
-  between(start: DateFormat, end: DateFormat, limit?: number): DateFormat[] {
+  between(start: DateInput, end: DateInput, limit?: number): DateFormat[] {
     const results: DateFormat[] = []
-    let cursor = start.set('second', 0).set('millisecond', 0)
+    const s = start instanceof DateFormat ? start : new DateFormat(start as string | number | Date)
+    const e = end instanceof DateFormat ? end : new DateFormat(end as string | number | Date)
+    let cursor = s.set('second', 0).set('millisecond', 0)
 
     if (!this.matches(cursor)) {
       cursor = cursor.add(1, 'minute')
     }
 
     for (let i = 0; i < MAX_ITER_MINUTES; i++) {
-      if (cursor.isAfter(end)) break
+      if (cursor.isAfter(e)) break
       if (limit !== undefined && results.length >= limit) break
 
       if (this.matches(cursor)) {
