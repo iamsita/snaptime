@@ -1,4 +1,4 @@
-import type { Unit } from './type'
+import type { Unit } from './types'
 import { UNIT_ALIASES } from './constants'
 
 /**

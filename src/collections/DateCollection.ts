@@ -1,6 +1,6 @@
-import DateFormat from './DateFormat'
+import DateFormat from '../core/DateFormat'
 import DateRange from './DateRange'
-import type { DateInput, GroupByUnit, UniqueUnit } from './type'
+import type { DateInput, GroupByUnit, UniqueUnit } from '../core/types'
 
 function toDF(input: DateInput): DateFormat {
   return input instanceof DateFormat ? input.clone() : new DateFormat(input as string | number | Date)

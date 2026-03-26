@@ -16,10 +16,36 @@ parseNatural('today', ref).valueOf() === ref.valueOf()  // → true
 parseNatural('tomorrow', ref).format('YYYY-MM-DD')      // → "2026-01-16"
 parseNatural('yesterday', ref).format('YYYY-MM-DD')     // → "2026-01-14"
 
+// Named times:
+parseNatural('noon', ref).format('YYYY-MM-DD HH:mm:ss')      // → "2026-01-15 12:00:00"
+parseNatural('midnight', ref).format('YYYY-MM-DD HH:mm:ss')   // → "2026-01-15 00:00:00"
+
 // Case-insensitive:
 parseNatural('NOW', ref).isValid()       // → true
 parseNatural('Today', ref).isValid()     // → true
 parseNatural('TOMORROW', ref).isValid()  // → true
+```
+
+## Time Support
+
+Append `at {time}` to relative date expressions to set a specific time of day. Both 12-hour (`3pm`, `10:30am`) and named times (`noon`, `midnight`) are supported.
+
+```typescript
+// ref = Thursday Jan 15, 2026 12:00:00
+parseNatural('tomorrow at 3pm', ref).format('YYYY-MM-DD HH:mm:ss')
+// → "2026-01-16 15:00:00"
+
+parseNatural('yesterday at 10:30', ref).format('YYYY-MM-DD HH:mm:ss')
+// → "2026-01-14 10:30:00"
+
+parseNatural('today at noon', ref).format('YYYY-MM-DD HH:mm:ss')
+// → "2026-01-15 12:00:00"
+
+parseNatural('today at midnight', ref).format('YYYY-MM-DD HH:mm:ss')
+// → "2026-01-15 00:00:00"
+
+parseNatural('next monday at 9am', ref).format('YYYY-MM-DD HH:mm:ss')
+// → "2026-01-19 09:00:00"
 ```
 
 ## Next / Last Weekday
@@ -51,6 +77,16 @@ parseNatural('last month', ref) // → ref - 1 month
 parseNatural('last year', ref)  // → ref - 1 year
 ```
 
+## This Period
+
+The `this` keyword returns the start of the current period.
+
+```typescript
+parseNatural('this week', ref)   // → start of current week
+parseNatural('this month', ref)  // → start of current month (Jan 1, 2026)
+parseNatural('this year', ref)   // → start of current year (Jan 1, 2026)
+```
+
 ## N Units Ago
 
 ```typescript
@@ -60,6 +96,11 @@ parseNatural('2 weeks ago', ref)   // → ref - 2 weeks
 parseNatural('1 month ago', ref)   // → ref - 1 month
 parseNatural('5 years ago', ref)   // → ref - 5 years
 parseNatural('2 months ago', ref)  // → ref - 2 months
+
+// Sub-day offsets:
+parseNatural('5 hours ago', ref)    // → ref - 5 hours
+parseNatural('30 minutes ago', ref) // → ref - 30 minutes
+parseNatural('10 seconds ago', ref) // → ref - 10 seconds
 ```
 
 ## In N Units / N Units From Now
@@ -73,6 +114,12 @@ parseNatural('in 1 year', ref)    // → ref + 1 year
 parseNatural('3 days from now', ref).format('YYYY-MM-DD') // → "2026-01-18"
 parseNatural('1 week from now', ref)   // → ref + 1 week
 parseNatural('2 months from now', ref) // → ref + 2 months
+
+// Sub-day offsets:
+parseNatural('in 2 hours', ref)          // → ref + 2 hours
+parseNatural('in 45 minutes', ref)       // → ref + 45 minutes
+parseNatural('30 minutes from now', ref) // → ref + 30 minutes
+parseNatural('in 90 seconds', ref)       // → ref + 90 seconds
 ```
 
 ## Beginning / End of Period
@@ -170,13 +217,18 @@ parseNatural('tomorrow').isValid()  // → true
 | `now` / `today` | `"today"` | Current date |
 | `tomorrow` | `"tomorrow"` | +1 day |
 | `yesterday` | `"yesterday"` | -1 day |
+| `noon` | `"noon"` | Today at 12:00:00 |
+| `midnight` | `"midnight"` | Today at 00:00:00 |
+| `{relative} at {time}` | `"tomorrow at 3pm"` | Relative date with specific time |
 | `next {weekday}` | `"next friday"` | Next occurrence |
 | `last {weekday}` | `"last monday"` | Previous occurrence |
+| `next {weekday} at {time}` | `"next monday at 9am"` | Next occurrence with time |
 | `next {period}` | `"next month"` | +1 period |
 | `last {period}` | `"last year"` | -1 period |
-| `{N} {unit} ago` | `"3 days ago"` | -N units |
-| `in {N} {unit}` | `"in 2 weeks"` | +N units |
-| `{N} {unit} from now` | `"5 days from now"` | +N units |
+| `this {period}` | `"this month"` | Start of current period |
+| `{N} {unit} ago` | `"3 days ago"`, `"5 hours ago"` | -N units (days, weeks, months, years, hours, minutes, seconds) |
+| `in {N} {unit}` | `"in 2 weeks"`, `"in 45 minutes"` | +N units (days, weeks, months, years, hours, minutes, seconds) |
+| `{N} {unit} from now` | `"5 days from now"`, `"30 minutes from now"` | +N units |
 | `beginning of {period}` | `"beginning of month"` | Start of period |
 | `end of {period}` | `"end of year"` | End of period |
 | `first day of {month} [year]` | `"first day of March 2027"` | 1st of month |

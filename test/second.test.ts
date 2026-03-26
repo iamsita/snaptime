@@ -1,4 +1,4 @@
-import { dateFormat } from '../src/package'
+import { dateFormat } from '../src/index'
 import { afterAll, beforeAll, describe, expect, test } from '@jest/globals'
 
 describe('dateFormat factory & API surface', () => {

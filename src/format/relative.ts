@@ -3,8 +3,8 @@
  * Receives timestamps and date components, returns results.
  */
 
-import { pad, pluralize } from './helpers'
-import type { PreciseDiffResult, AgeResult, CountdownResult, LocaleRelativeTime, LocaleCalendar } from './type'
+import { pad, pluralize } from '../core/helpers'
+import type { PreciseDiffResult, AgeResult, CountdownResult, LocaleRelativeTime, LocaleCalendar } from '../core/types'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // fromNow — relative time string

@@ -1,5 +1,5 @@
-import DateFormat from './DateFormat'
-import type { HolidayCountry } from './type'
+import DateFormat from '../core/DateFormat'
+import type { HolidayCountry } from '../core/types'
 
 /**
  * Check if a date falls on a business day (Mon-Fri, not a holiday).

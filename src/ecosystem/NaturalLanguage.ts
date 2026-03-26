@@ -1,5 +1,5 @@
-import DateFormat from './DateFormat'
-import type { Unit } from './type'
+import DateFormat from '../core/DateFormat'
+import type { Unit } from '../core/types'
 
 const WEEKDAYS: Record<string, number> = {
   sunday: 0, monday: 1, tuesday: 2, wednesday: 3,

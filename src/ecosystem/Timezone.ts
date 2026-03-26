@@ -1,5 +1,5 @@
-import DateFormat from './DateFormat'
-import type { DateInput } from './type'
+import DateFormat from '../core/DateFormat'
+import type { DateInput } from '../core/types'
 
 function toDF(input: DateInput): DateFormat {
   return input instanceof DateFormat ? input : new DateFormat(input as string | number | Date)

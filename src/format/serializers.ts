@@ -3,8 +3,8 @@
  * Receives native Date, returns formatted strings.
  */
 
-import { DEFAULT_WEEKDAYS, DEFAULT_MONTHS_SHORT } from './constants'
-import { pad, formatOffset, getOffsetMinutes } from './helpers'
+import { DEFAULT_WEEKDAYS, DEFAULT_MONTHS_SHORT } from '../core/constants'
+import { pad, formatOffset, getOffsetMinutes } from '../core/helpers'
 
 const WEEKDAYS_SHORT = DEFAULT_WEEKDAYS.map((w) => w.slice(0, 3))
 

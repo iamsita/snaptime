@@ -1,4 +1,4 @@
-import { dateFormat } from '../src/package'
+import { dateFormat } from '../src/index'
 
 describe('dateFormat factory & API surface', () => {
   beforeAll(() => {

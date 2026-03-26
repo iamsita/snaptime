@@ -160,6 +160,29 @@ new DateCollection([
 
 ---
 
+## Iterable Protocol
+
+DateCollection implements `[Symbol.iterator]()`, so you can use `for...of` loops directly:
+
+```typescript
+const c = new DateCollection(['2026-01-01', '2026-06-01', '2026-03-15'])
+
+for (const date of c) {
+  console.log(date.format('YYYY-MM-DD'))
+}
+// → "2026-01-01"
+// → "2026-06-01"
+// → "2026-03-15"
+
+// Spread into an array:
+const arr = [...c]
+
+// Destructuring:
+const [first, second] = c
+```
+
+---
+
 ## Element Access
 
 ```typescript
@@ -241,4 +264,95 @@ new DateCollection(['2026-01-01', '2026-06-01'])
 // toArray returns DateFormat array:
 const arr = new DateCollection(['2026-01-01']).toArray()
 arr[0].format('YYYY-MM-DD') // → "2026-01-01"
+
+// forEach iterates with index:
+new DateCollection(['2026-01-01', '2026-06-01'])
+  .forEach((d, i) => console.log(i, d.format('YYYY-MM-DD')))
+// → 0 "2026-01-01"
+// → 1 "2026-06-01"
+
+// reduce accumulates a value:
+const totalYear = new DateCollection(['2026-01-01', '2025-06-01'])
+  .reduce((sum, d) => sum + d.get('year'), 0)
+// → 4051
+```
+
+---
+
+## Predicate Testing & Search
+
+```typescript
+const c = new DateCollection([
+  '2026-01-17', // Saturday
+  '2026-01-19', // Monday
+  '2026-01-20'  // Tuesday
+])
+
+// some() — returns true if any element matches:
+c.some(d => d.isWeekend())  // → true  (Saturday matches)
+
+// every() — returns true if all elements match:
+c.every(d => d.isValid())   // → true  (all are valid dates)
+c.every(d => d.isWeekday()) // → false (Saturday is not a weekday)
+
+// find() — returns the first matching DateFormat:
+const found = c.find(d => d.isWeekend())
+found.format('YYYY-MM-DD') // → "2026-01-17"
+
+// find() with no match → returns undefined:
+c.find(d => d.get('year') === 2030) // → undefined
+```
+
+---
+
+## Merge
+
+Combine two collections into one:
+
+```typescript
+const a = new DateCollection(['2026-01-01', '2026-03-01'])
+const b = new DateCollection(['2026-06-01', '2026-12-31'])
+
+const combined = a.merge(b)
+combined.count() // → 4
+
+// Duplicates are preserved — use unique() to deduplicate:
+const c = new DateCollection(['2026-01-01'])
+const d = new DateCollection(['2026-01-01', '2026-06-01'])
+c.merge(d).count()            // → 3
+c.merge(d).unique('day').count() // → 2
+```
+
+---
+
+## Span
+
+Get a `DateRange` from the collection's earliest date to its latest date:
+
+```typescript
+const c = new DateCollection(['2026-06-01', '2026-01-01', '2026-12-31'])
+
+const range = c.span()
+range.start().format('YYYY-MM-DD') // → "2026-01-01"
+range.end().format('YYYY-MM-DD')   // → "2026-12-31"
+```
+
+---
+
+## DateInput Acceptance
+
+The constructor and `between()` now accept `DateInput` — a union type covering `string`, `number` (timestamp), `Date`, or `DateFormat` — instead of requiring specific types. This means you can freely mix input formats:
+
+```typescript
+// Constructor accepts any DateInput values:
+const c = new DateCollection([
+  '2026-01-01',                      // string
+  1751328000000,                      // number (timestamp)
+  new Date(2026, 5, 1),              // Date object
+  new DateFormat('2026-09-01')       // DateFormat instance
+])
+
+// between() also accepts DateInput for its bounds:
+c.between('2026-02-01', new Date(2026, 8, 30)).count()
+// → dates falling within Feb 1 – Sep 30
 ```

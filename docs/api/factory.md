@@ -26,6 +26,9 @@ d8(existingDateFormat)            // clone
 ### `d8.parse(str, fmt, strict?): DateFormat`
 Parse with custom format. See [DateFormat.parse()](./dateformat#static-methods).
 
+### `d8.fromObject(obj: DateObject, opts?): DateFormat`
+Create a `DateFormat` from a plain object with date components. See [DateFormat.fromObject()](./dateformat#static-methods).
+
 ### `d8.min(...dates): DateFormat`
 Return the earliest date.
 

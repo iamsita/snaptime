@@ -1,4 +1,4 @@
-import type { UnitInput } from './type'
+import type { UnitInput } from './types'
 import { MS_PER_UNIT } from './constants'
 import { resolveUnit, pad, pluralize } from './helpers'
 

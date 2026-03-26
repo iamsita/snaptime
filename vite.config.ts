@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [dts()],
   build: {
     lib: {
-      entry: resolve(__dirname, 'src/package/index.ts'),
+      entry: resolve(__dirname, 'src/index.ts'),
       name: 'D8',
       formats: ['es', 'umd', 'cjs', 'iife'],
       fileName: (format) => `index.${format}.js`,

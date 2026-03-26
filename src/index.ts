@@ -1,10 +1,10 @@
-import DateFormat from './DateFormat'
-import Duration from './Duration'
-import DateRange from './DateRange'
-import DateCollection from './DateCollection'
-import Timezone from './Timezone'
-import Cron from './Cron'
-import parseNatural from './NaturalLanguage'
+import DateFormat from './core/DateFormat'
+import Duration from './core/Duration'
+import DateRange from './collections/DateRange'
+import DateCollection from './collections/DateCollection'
+import Timezone from './ecosystem/Timezone'
+import Cron from './ecosystem/Cron'
+import parseNatural from './ecosystem/NaturalLanguage'
 import {
   isBusinessDay,
   addBusinessDays,
@@ -13,8 +13,8 @@ import {
   prevBusinessDay,
   businessDaysBetween,
   getHolidays,
-} from './BusinessDay'
-import { resolveUnit } from './helpers'
+} from './ecosystem/BusinessDay'
+import { resolveUnit } from './core/helpers'
 import type {
   Unit,
   UnitInput,
@@ -41,7 +41,7 @@ import type {
   FiscalConfig,
   CronField,
   DateFormatStatic,
-} from './type'
+} from './core/types'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Factory function — main entry point

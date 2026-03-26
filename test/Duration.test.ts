@@ -1,6 +1,6 @@
 import { describe, test, expect } from '@jest/globals'
-import Duration from '../src/package/Duration'
-import type { Unit } from '../src/package/type'
+import Duration from '../src/core/Duration'
+import type { Unit } from '../src/core/types'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const MS = 1

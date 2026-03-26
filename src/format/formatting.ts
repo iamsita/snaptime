@@ -3,9 +3,9 @@
  * Receives raw date components and locale data, returns strings.
  */
 
-import { DEFAULT_MONTHS, DEFAULT_MONTHS_SHORT, DEFAULT_WEEKDAYS } from './constants'
-import { pad, ordinal, formatOffset, getOffsetMinutes } from './helpers'
-import type { LocaleData, LocaleRelativeTime, LocaleCalendar } from './type'
+import { DEFAULT_MONTHS, DEFAULT_MONTHS_SHORT, DEFAULT_WEEKDAYS } from '../core/constants'
+import { pad, ordinal, formatOffset, getOffsetMinutes } from '../core/helpers'
+import type { LocaleData, LocaleRelativeTime, LocaleCalendar } from '../core/types'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Resolved locale shape (with defaults applied)
@@ -59,12 +59,14 @@ export interface DateComponents {
 // format() — pure function
 // ─────────────────────────────────────────────────────────────────────────────
 
+const ESC = '\u0001'
+
 export function formatDate(fmt: string, c: DateComponents, locale: ResolvedLocale): string {
   // Extract escaped sequences
   const escapes: string[] = []
   const cleanFmt = fmt.replace(/\[([^\]]*)\]/g, (_, text) => {
     escapes.push(text)
-    return `\x00${escapes.length - 1}\x00`
+    return `${ESC}${escapes.length - 1}${ESC}`
   })
 
   const Y = String(c.year)
@@ -113,8 +115,8 @@ export function formatDate(fmt: string, c: DateComponents, locale: ResolvedLocal
   const tokens = Object.keys(tokenMap).sort((a, b) => b.length - a.length)
   let out = ''
   for (let i = 0; i < cleanFmt.length;) {
-    if (cleanFmt[i] === '\x00') {
-      const end = cleanFmt.indexOf('\x00', i + 1)
+    if (cleanFmt[i] === ESC) {
+      const end = cleanFmt.indexOf(ESC, i + 1)
       const idx = Number(cleanFmt.substring(i + 1, end))
       out += escapes[idx]
       i = end + 1

@@ -119,3 +119,16 @@ d8('2026-01-15T12:00:00Z').format('dddd') // → "Jeudi"
 
 DateFormat.locale('en') // reset
 ```
+
+## Escape Brackets
+
+```js
+d8('2026-03-15').format('[Year:] YYYY [Month:] MM')
+// "Year: 2026 Month: 03"
+
+d8('2026-03-15').format('[Today is] dddd')
+// "Today is Sunday"
+
+d8('2026-01-01').format('YYYY [is a] dddd')
+// "2026 is a Thursday"
+```

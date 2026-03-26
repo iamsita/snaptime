@@ -14,7 +14,7 @@ import dateFormat, {
   prevBusinessDay,
   businessDaysBetween,
   getHolidays
-} from '../src/package/index'
+} from '../src/index'
 
 // ---------------------------------------------------------------------------
 // Factory function

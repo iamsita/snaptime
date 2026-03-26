@@ -1,6 +1,6 @@
-import type { RangeIterateUnit, Unit, DateInput } from './type'
-import DateFormat from './DateFormat'
-import Duration from './Duration'
+import type { RangeIterateUnit, Unit, DateInput } from '../core/types'
+import DateFormat from '../core/DateFormat'
+import Duration from '../core/Duration'
 
 function toDF(input: DateInput): DateFormat {
   return input instanceof DateFormat ? input : new DateFormat(input as string | number | Date)

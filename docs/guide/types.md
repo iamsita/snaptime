@@ -34,6 +34,19 @@ type SortOrder = 'asc' | 'desc'
 type WeekStart = 'sunday' | 'monday'
 ```
 
+### `Inclusivity`
+
+Controls boundary inclusion for `isBetween()`:
+
+```typescript
+type Inclusivity = '()' | '[]' | '[)' | '(]'
+```
+
+- `'()'` — exclusive on both ends (default)
+- `'[]'` — inclusive on both ends
+- `'[)'` — inclusive start, exclusive end
+- `'(]'` — exclusive start, inclusive end
+
 ### Specialized Unit Types
 
 ```typescript
@@ -51,6 +64,28 @@ type UniqueUnit = 'year' | 'month' | 'week' | 'day' | 'hour' | 'minute' | 'secon
 // For getHolidays()
 type HolidayCountry = 'US' | 'UK' | 'IN' | 'DE' | 'FR' | 'CA' | 'AU'
 ```
+
+### `DateInput`
+
+The universal input type accepted by most D8 APIs — parsing, comparison, arithmetic, and factory methods:
+
+```typescript
+type DateInput = string | number | Date | DateFormatLike
+```
+
+You can pass an ISO string, a Unix timestamp (ms), a native `Date`, or any object that satisfies the `DateFormatLike` duck-typing interface.
+
+### `UnitInput`
+
+Accepts a canonical `Unit` plus common shorthand aliases:
+
+```typescript
+type UnitInput = Unit
+  | 'y' | 'M' | 'd' | 'h' | 'm' | 's' | 'ms'
+  | 'w' | 'Q'
+```
+
+Methods like `add()`, `startOf()`, `diff()`, and `get()` all accept `UnitInput`, so you can write `d.add(1, 'y')` instead of `d.add(1, 'year')`.
 
 ## Result Types
 
@@ -99,6 +134,22 @@ interface CountdownResult {
   isPast: boolean
   format(template: string): string  // "DD days HH:mm:ss"
   humanize(): string                // "5 days, 8 hours"
+}
+```
+
+### `DateObject`
+
+A plain object representation of a date, used by `DateFormat.fromObject()`:
+
+```typescript
+interface DateObject {
+  year: number
+  month?: number
+  day?: number
+  hour?: number
+  minute?: number
+  second?: number
+  millisecond?: number
 }
 ```
 
@@ -185,6 +236,20 @@ interface LocaleCalendar {
 ```
 
 ## Plugin Types
+
+### `DateFormatLike`
+
+A duck-typing interface that allows any object to be used wherever D8 expects a date, as long as it implements these methods:
+
+```typescript
+interface DateFormatLike {
+  valueOf(): number
+  isValid(): boolean
+  get(unit: Unit): number
+}
+```
+
+This enables interop with other date libraries or custom date wrappers without requiring an explicit dependency on D8.
 
 ### `PluginFn`
 

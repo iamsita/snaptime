@@ -12,7 +12,7 @@ import type {
   FiscalConfig,
   DateObject,
   Inclusivity,
-} from './type'
+} from './types'
 import { MS_PER_UNIT, PARSE_TOKEN_RE } from './constants'
 import {
   resolveUnit,
@@ -24,10 +24,10 @@ import {
 import Duration from './Duration'
 
 // Formatting (pure functions — no circular dependency)
-import { formatDate, formatIntl, resolveLocale, type DateComponents } from './formatting'
+import { formatDate, formatIntl, resolveLocale, type DateComponents } from '../format/formatting'
 
 // Serialization (pure functions)
-import { toRFC2822 as _toRFC2822, toRFC3339 as _toRFC3339, toExcel as _toExcel } from './serializers'
+import { toRFC2822 as _toRFC2822, toRFC3339 as _toRFC3339, toExcel as _toExcel } from '../format/serializers'
 
 // Relative time (pure functions)
 import {
@@ -36,7 +36,7 @@ import {
   preciseDiff as _preciseDiff,
   age as _age,
   countdown as _countdown,
-} from './relative'
+} from '../format/relative'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal helpers
@@ -112,16 +112,18 @@ export default class DateFormat {
     }
 
     const escapes: string[] = []
+    const ESC = '\u0001'
     const cleanFmt = fmt.replace(/\[([^\]]*)\]/g, (_, text) => {
       escapes.push(text)
-      return `\x00${escapes.length - 1}\x00`
+      return `${ESC}${escapes.length - 1}${ESC}`
     })
 
     let pattern = cleanFmt
     for (const [tok, rx] of Object.entries(PARSE_TOKEN_RE)) {
       pattern = pattern.replace(new RegExp(tok, 'g'), rx)
     }
-    pattern = pattern.replace(/\x00(\d+)\x00/g, (_, idx) => {
+    const escRe = new RegExp(`${ESC}(\\d+)${ESC}`, 'g')
+    pattern = pattern.replace(escRe, (_, idx) => {
       return escapes[Number(idx)].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     })
 
