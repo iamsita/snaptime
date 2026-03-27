@@ -80,7 +80,7 @@
     "ts-node-dev": "^2.0.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.1",
-    "vite": "^8.0.1",
+    "vite": "^8.0.3",
     "vite-plugin-dts": "^4.5.4",
     "vitepress": "^1.6.4"
   }
