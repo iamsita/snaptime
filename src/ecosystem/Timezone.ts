@@ -50,7 +50,14 @@ export default class Timezone {
 
     const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0)
     const h = get('hour') % 24
-    const tzMs = Date.UTC(get('year'), get('month') - 1, get('day'), h, get('minute'), get('second'))
+    const tzMs = Date.UTC(
+      get('year'),
+      get('month') - 1,
+      get('day'),
+      h,
+      get('minute'),
+      get('second')
+    )
     return Math.round((tzMs - d.valueOf()) / 60_000)
   }
 

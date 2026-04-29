@@ -116,7 +116,11 @@ interface DateParts {
   millisecond: number
 }
 
-export function preciseDiff(aParts: DateParts, bParts: DateParts, dimPrev: number): PreciseDiffResult {
+export function preciseDiff(
+  aParts: DateParts,
+  bParts: DateParts,
+  dimPrev: number
+): PreciseDiffResult {
   // Always compute |b - a| treating the larger as upper. Caller orders args.
   let years = bParts.year - aParts.year
   let months = bParts.month - aParts.month

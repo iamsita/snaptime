@@ -73,5 +73,8 @@ function expandLongFormat(fmt: string, locale: ResolvedLocale): string {
   }
 
   // Restore literals
-  return result.replace(new RegExp(`${ESC}(\\d+)${ESC}`, 'g'), (_, idx) => `[${literals[Number(idx)]}]`)
+  return result.replace(
+    new RegExp(`${ESC}(\\d+)${ESC}`, 'g'),
+    (_, idx) => `[${literals[Number(idx)]}]`
+  )
 }

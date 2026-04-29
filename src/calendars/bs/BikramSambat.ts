@@ -169,7 +169,9 @@ export function formatBS(
     dddd:
       weekdayLang === 'ne'
         ? BS_WEEKDAYS_NE[bs.weekday]
-        : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][bs.weekday],
+        : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][
+            bs.weekday
+          ],
     ddd:
       weekdayLang === 'ne'
         ? BS_WEEKDAYS_NE[bs.weekday].slice(0, -3)

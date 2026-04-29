@@ -47,7 +47,15 @@ export const BS_MONTH_NAMES_EN = [
   'Falgun',
   'Chaitra'
 ]
-export const BS_WEEKDAYS_NE = ['आइतबार', 'सोमबार', 'मंगलबार', 'बुधबार', 'बिहीबार', 'शुक्रबार', 'शनिबार']
+export const BS_WEEKDAYS_NE = [
+  'आइतबार',
+  'सोमबार',
+  'मंगलबार',
+  'बुधबार',
+  'बिहीबार',
+  'शुक्रबार',
+  'शनिबार'
+]
 
 export const BS_MONTHS: number[][] = [
   /* 2000 */ [30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 30, 30],

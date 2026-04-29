@@ -105,7 +105,7 @@ export default class DatePeriod implements Iterable<DateTime> {
         emitted++
         yield cursor
       }
-      cursor = start.add(step * (++i), unit)
+      cursor = start.add(step * ++i, unit)
     }
   }
 

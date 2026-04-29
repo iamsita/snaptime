@@ -71,7 +71,11 @@ export function weekday(d: Date, isUtc: boolean): number {
 }
 
 /** Locale-aware weekday: 0..6 starting from `weekStart`. */
-export function localeWeekday(d: Date, isUtc: boolean, weekStart: 'sunday' | 'monday' | 'saturday'): number {
+export function localeWeekday(
+  d: Date,
+  isUtc: boolean,
+  weekStart: 'sunday' | 'monday' | 'saturday'
+): number {
   const dow = weekday(d, isUtc)
   const offset = weekStart === 'sunday' ? 0 : weekStart === 'monday' ? 1 : 6
   return (dow - offset + 7) % 7

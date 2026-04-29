@@ -70,10 +70,7 @@ export default class RangeSet implements Iterable<DateRange> {
     for (let i = 1; i < sorted.length; i++) {
       const r = sorted[i]
       if (r.start.valueOf() <= cur.end.valueOf()) {
-        cur = new DateRange(
-          cur.start,
-          new DateTime(Math.max(cur.end.valueOf(), r.end.valueOf()))
-        )
+        cur = new DateRange(cur.start, new DateTime(Math.max(cur.end.valueOf(), r.end.valueOf())))
       } else {
         out.push(cur)
         cur = r
@@ -142,7 +139,9 @@ export default class RangeSet implements Iterable<DateRange> {
   contains(instant: DateInput): boolean {
     const t = new DateTime(instant).valueOf()
     return this._ranges.some(
-      (r) => t >= Math.min(r.start.valueOf(), r.end.valueOf()) && t <= Math.max(r.start.valueOf(), r.end.valueOf())
+      (r) =>
+        t >= Math.min(r.start.valueOf(), r.end.valueOf()) &&
+        t <= Math.max(r.start.valueOf(), r.end.valueOf())
     )
   }
 

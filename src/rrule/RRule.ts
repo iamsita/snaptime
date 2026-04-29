@@ -208,7 +208,11 @@ export class RRule implements Iterable<DateTime> {
         candidates = this._yearlyCandidates(windowStart.getFullYear(), dtstart)
         break
       case 'MONTHLY':
-        candidates = this._monthlyCandidates(windowStart.getFullYear(), windowStart.getMonth(), dtstart)
+        candidates = this._monthlyCandidates(
+          windowStart.getFullYear(),
+          windowStart.getMonth(),
+          dtstart
+        )
         break
       case 'WEEKLY':
         candidates = this._weeklyCandidates(windowStart, dtstart)
@@ -249,7 +253,16 @@ export class RRule implements Iterable<DateTime> {
       for (const md of o.bymonthday) {
         const day = md > 0 ? md : dim + md + 1
         if (day >= 1 && day <= dim) {
-          out.push(new Date(year, month0, day, dtstart.getHours(), dtstart.getMinutes(), dtstart.getSeconds()))
+          out.push(
+            new Date(
+              year,
+              month0,
+              day,
+              dtstart.getHours(),
+              dtstart.getMinutes(),
+              dtstart.getSeconds()
+            )
+          )
         }
       }
     } else if (o.byweekday && o.byweekday.length) {
@@ -265,18 +278,38 @@ export class RRule implements Iterable<DateTime> {
           const idx = spec.n > 0 ? spec.n - 1 : matches.length + spec.n
           const day = matches[idx]
           if (day != null) {
-            out.push(new Date(year, month0, day, dtstart.getHours(), dtstart.getMinutes(), dtstart.getSeconds()))
+            out.push(
+              new Date(
+                year,
+                month0,
+                day,
+                dtstart.getHours(),
+                dtstart.getMinutes(),
+                dtstart.getSeconds()
+              )
+            )
           }
         } else {
           for (const day of matches) {
-            out.push(new Date(year, month0, day, dtstart.getHours(), dtstart.getMinutes(), dtstart.getSeconds()))
+            out.push(
+              new Date(
+                year,
+                month0,
+                day,
+                dtstart.getHours(),
+                dtstart.getMinutes(),
+                dtstart.getSeconds()
+              )
+            )
           }
         }
       }
     } else {
       // Anchored to dtstart's day-of-month
       const day = Math.min(dtstart.getDate(), dim)
-      out.push(new Date(year, month0, day, dtstart.getHours(), dtstart.getMinutes(), dtstart.getSeconds()))
+      out.push(
+        new Date(year, month0, day, dtstart.getHours(), dtstart.getMinutes(), dtstart.getSeconds())
+      )
     }
 
     return out
@@ -340,7 +373,10 @@ export class RRule implements Iterable<DateTime> {
     if (o.bymonth && !o.bymonth.includes(d.getMonth() + 1)) return false
     if (o.byyearday) {
       const dy = dayOfYear(d)
-      const yearLen = (d.getFullYear() % 4 === 0 && (d.getFullYear() % 100 !== 0 || d.getFullYear() % 400 === 0)) ? 366 : 365
+      const yearLen =
+        d.getFullYear() % 4 === 0 && (d.getFullYear() % 100 !== 0 || d.getFullYear() % 400 === 0)
+          ? 366
+          : 365
       const ok = o.byyearday.some((n) => (n > 0 ? n === dy : yearLen + n + 1 === dy))
       if (!ok) return false
     }

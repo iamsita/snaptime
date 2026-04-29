@@ -52,4 +52,14 @@ export const Holidays = {
   }
 }
 
-export { holidaysUS, holidaysUK, holidaysIN, holidaysDE, holidaysFR, holidaysCA, holidaysAU, holidaysJP, holidaysNP }
+export {
+  holidaysUS,
+  holidaysUK,
+  holidaysIN,
+  holidaysDE,
+  holidaysFR,
+  holidaysCA,
+  holidaysAU,
+  holidaysJP,
+  holidaysNP
+}

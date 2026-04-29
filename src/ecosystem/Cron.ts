@@ -60,7 +60,13 @@ function resolveValue(token: string, isDow: boolean, isMonth: boolean): number {
   return parseInt(token, 10)
 }
 
-function parseField(token: string, min: number, max: number, isDow = false, isMonth = false): CronField {
+function parseField(
+  token: string,
+  min: number,
+  max: number,
+  isDow = false,
+  isMonth = false
+): CronField {
   if (token === '*' || token === '?') return { values: new Set(), any: true }
 
   const values = new Set<number>()
@@ -224,22 +230,10 @@ export default class Cron {
   }
 
   humanize(): string {
-    if (
-      this.minute.any &&
-      this.hour.any &&
-      this.dom.any &&
-      this.month.any &&
-      this.dow.any
-    )
+    if (this.minute.any && this.hour.any && this.dom.any && this.month.any && this.dow.any)
       return 'Every minute'
 
-    if (
-      !this.minute.any &&
-      this.hour.any &&
-      this.dom.any &&
-      this.month.any &&
-      this.dow.any
-    ) {
+    if (!this.minute.any && this.hour.any && this.dom.any && this.month.any && this.dow.any) {
       const vals = [...this.minute.values].sort((a, b) => a - b)
       return `At minute ${vals.join(', ')} past every hour`
     }

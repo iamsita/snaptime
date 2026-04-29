@@ -157,7 +157,11 @@ export function dayLength(date: Date, lat: number, lon: number): number {
 }
 
 /** Civil twilight (sun at -6°). */
-export function civilTwilight(date: Date, lat: number, lon: number): { dawn: Date | null; dusk: Date | null } {
+export function civilTwilight(
+  date: Date,
+  lat: number,
+  lon: number
+): { dawn: Date | null; dusk: Date | null } {
   return {
     dawn: timeAtAltitude(date, lat, lon, -6, -1),
     dusk: timeAtAltitude(date, lat, lon, -6, 1)
@@ -165,7 +169,11 @@ export function civilTwilight(date: Date, lat: number, lon: number): { dawn: Dat
 }
 
 /** Nautical twilight (sun at -12°). */
-export function nauticalTwilight(date: Date, lat: number, lon: number): { dawn: Date | null; dusk: Date | null } {
+export function nauticalTwilight(
+  date: Date,
+  lat: number,
+  lon: number
+): { dawn: Date | null; dusk: Date | null } {
   return {
     dawn: timeAtAltitude(date, lat, lon, -12, -1),
     dusk: timeAtAltitude(date, lat, lon, -12, 1)
@@ -173,7 +181,11 @@ export function nauticalTwilight(date: Date, lat: number, lon: number): { dawn: 
 }
 
 /** Astronomical twilight (sun at -18°). */
-export function astronomicalTwilight(date: Date, lat: number, lon: number): { dawn: Date | null; dusk: Date | null } {
+export function astronomicalTwilight(
+  date: Date,
+  lat: number,
+  lon: number
+): { dawn: Date | null; dusk: Date | null } {
   return {
     dawn: timeAtAltitude(date, lat, lon, -18, -1),
     dusk: timeAtAltitude(date, lat, lon, -18, 1)

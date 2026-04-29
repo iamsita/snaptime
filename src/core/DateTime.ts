@@ -109,7 +109,7 @@ class DateTime {
   /** Forced offset minutes — set by `shiftZone`; null otherwise. */
   private _offsetMinutes: number | null = null
   /** IANA name attached by `shiftZone`; informational only. */
-  private _zoneName: string | null = null
+  private _zoneName: string | null = null;
 
   // Type-level extension hook for plugins
   declare ['constructor']: typeof DateTime
@@ -345,7 +345,7 @@ class DateTime {
   locale(name?: string): DateTime | string {
     if (name === undefined) return this._localeName ?? Locales.getDefault()
     const c = this.clone()
-    ;c._localeName = name
+    c._localeName = name
     return c
   }
 
@@ -515,13 +515,11 @@ class DateTime {
         const probe = a.add(units, 'year')
         if (probe.isAfter(b)) units -= 1
       } else if (u === 'month') {
-        units =
-          (b.get('year') - a.get('year')) * 12 + (b.get('month') - a.get('month'))
+        units = (b.get('year') - a.get('year')) * 12 + (b.get('month') - a.get('month'))
         const probe = a.add(units, 'month')
         if (probe.isAfter(b)) units -= 1
       } else {
-        units =
-          (b.get('year') - a.get('year')) * 4 + (b.quarter() - a.quarter())
+        units = (b.get('year') - a.get('year')) * 4 + (b.quarter() - a.quarter())
         const probe = a.add(units, 'quarter')
         if (probe.isAfter(b)) units -= 1
       }
@@ -598,7 +596,12 @@ class DateTime {
   isSame(o: DateInput, unit?: UnitInput): boolean {
     if (!unit) return this.valueOf() === toDT(o).valueOf()
     const u = resolveUnit(unit)
-    return this.startOf(u as BoundaryUnit).valueOf() === toDT(o).startOf(u as BoundaryUnit).valueOf()
+    return (
+      this.startOf(u as BoundaryUnit).valueOf() ===
+      toDT(o)
+        .startOf(u as BoundaryUnit)
+        .valueOf()
+    )
   }
   isSameOrBefore(o: DateInput, unit?: UnitInput): boolean {
     return this.isSame(o, unit) || this.isBefore(o)
@@ -606,15 +609,22 @@ class DateTime {
   isSameOrAfter(o: DateInput, unit?: UnitInput): boolean {
     return this.isSame(o, unit) || this.isAfter(o)
   }
-  isBetween(a: DateInput, b: DateInput, unit?: UnitInput, inclusivity: Inclusivity = '()'): boolean {
-    const self = unit
-      ? this.startOf(resolveUnit(unit) as BoundaryUnit).valueOf()
-      : this.valueOf()
+  isBetween(
+    a: DateInput,
+    b: DateInput,
+    unit?: UnitInput,
+    inclusivity: Inclusivity = '()'
+  ): boolean {
+    const self = unit ? this.startOf(resolveUnit(unit) as BoundaryUnit).valueOf() : this.valueOf()
     const A = unit
-      ? toDT(a).startOf(resolveUnit(unit) as BoundaryUnit).valueOf()
+      ? toDT(a)
+          .startOf(resolveUnit(unit) as BoundaryUnit)
+          .valueOf()
       : toDT(a).valueOf()
     const B = unit
-      ? toDT(b).startOf(resolveUnit(unit) as BoundaryUnit).valueOf()
+      ? toDT(b)
+          .startOf(resolveUnit(unit) as BoundaryUnit)
+          .valueOf()
       : toDT(b).valueOf()
     const leftOk = inclusivity[0] === '[' ? self >= A : self > A
     const rightOk = inclusivity[1] === ']' ? self <= B : self < B
@@ -780,9 +790,7 @@ class DateTime {
     return this.isSame(o, 'second')
   }
   isSameQuarter(o: DateInput): boolean {
-    return (
-      this.get('year') === toDT(o).get('year') && this.quarter() === toDT(o).quarter()
-    )
+    return this.get('year') === toDT(o).get('year') && this.quarter() === toDT(o).quarter()
   }
 
   isToday(): boolean {
@@ -1101,19 +1109,35 @@ class DateTime {
   // ─────────────────────────────────────────────────────────────────────────
 
   fromNow(withoutSuffix = false): string {
-    return _relativeTime(this.valueOf() - Clock.now(), this.getLocaleData().relativeTime, withoutSuffix)
+    return _relativeTime(
+      this.valueOf() - Clock.now(),
+      this.getLocaleData().relativeTime,
+      withoutSuffix
+    )
   }
 
   from(other: DateInput, withoutSuffix = false): string {
-    return _relativeTime(this.valueOf() - toDT(other).valueOf(), this.getLocaleData().relativeTime, withoutSuffix)
+    return _relativeTime(
+      this.valueOf() - toDT(other).valueOf(),
+      this.getLocaleData().relativeTime,
+      withoutSuffix
+    )
   }
 
   toNow(withoutSuffix = false): string {
-    return _relativeTime(Clock.now() - this.valueOf(), this.getLocaleData().relativeTime, withoutSuffix)
+    return _relativeTime(
+      Clock.now() - this.valueOf(),
+      this.getLocaleData().relativeTime,
+      withoutSuffix
+    )
   }
 
   to(other: DateInput, withoutSuffix = false): string {
-    return _relativeTime(toDT(other).valueOf() - this.valueOf(), this.getLocaleData().relativeTime, withoutSuffix)
+    return _relativeTime(
+      toDT(other).valueOf() - this.valueOf(),
+      this.getLocaleData().relativeTime,
+      withoutSuffix
+    )
   }
 
   /** Carbon-style alias for `fromNow`. */
@@ -1182,8 +1206,7 @@ class DateTime {
   // ─────────────────────────────────────────────────────────────────────────
 
   calendarGrid(opts: CalendarGridOptions = {}): CalendarCell<DateTime>[][] {
-    const weekStartOffset =
-      opts.weekStart === 'monday' ? 1 : opts.weekStart === 'saturday' ? 6 : 0
+    const weekStartOffset = opts.weekStart === 'monday' ? 1 : opts.weekStart === 'saturday' ? 6 : 0
     const year = this.get('year')
     const month = this.get('month')
     const firstDay = new DateTime(new Date(year, month - 1, 1))
@@ -1294,7 +1317,14 @@ function computeZoneOffsetMinutes(zone: string, ms: number): number {
   }).formatToParts(new Date(ms))
   const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0)
   const hour = get('hour') % 24
-  const tzMs = Date.UTC(get('year'), get('month') - 1, get('day'), hour, get('minute'), get('second'))
+  const tzMs = Date.UTC(
+    get('year'),
+    get('month') - 1,
+    get('day'),
+    hour,
+    get('minute'),
+    get('second')
+  )
   return Math.round((tzMs - ms) / 60_000)
 }
 

@@ -47,9 +47,7 @@ export class DateRule {
   }
 
   static valid(message = 'Date is invalid'): DateRule {
-    return new DateRule([
-      { kind: 'value', fn: (d) => (d.isValid() ? null : message) }
-    ])
+    return new DateRule([{ kind: 'value', fn: (d) => (d.isValid() ? null : message) }])
   }
 
   static future(message = 'Date must be in the future'): DateRule {
@@ -88,14 +86,20 @@ export class DateRule {
   before(other: DateInput, message?: string): DateRule {
     return this._add({
       kind: 'value',
-      fn: (d) => (d.isBefore(other) ? null : message ?? `Date must be before ${new DateTime(other).toISOString()}`)
+      fn: (d) =>
+        d.isBefore(other)
+          ? null
+          : (message ?? `Date must be before ${new DateTime(other).toISOString()}`)
     })
   }
 
   after(other: DateInput, message?: string): DateRule {
     return this._add({
       kind: 'value',
-      fn: (d) => (d.isAfter(other) ? null : message ?? `Date must be after ${new DateTime(other).toISOString()}`)
+      fn: (d) =>
+        d.isAfter(other)
+          ? null
+          : (message ?? `Date must be after ${new DateTime(other).toISOString()}`)
     })
   }
 
@@ -110,8 +114,8 @@ export class DateRule {
       fn: (d) =>
         d.isBetween(min, max, undefined, inclusivity)
           ? null
-          : message ??
-            `Date must be between ${new DateTime(min).toISOString()} and ${new DateTime(max).toISOString()}`
+          : (message ??
+            `Date must be between ${new DateTime(min).toISOString()} and ${new DateTime(max).toISOString()}`)
     })
   }
 
@@ -133,21 +137,22 @@ export class DateRule {
   dayOfWeek(weekday: number, message?: string): DateRule {
     return this._add({
       kind: 'value',
-      fn: (d) => (d.dayOfWeek() === weekday ? null : message ?? `Must be weekday index ${weekday}`)
+      fn: (d) =>
+        d.dayOfWeek() === weekday ? null : (message ?? `Must be weekday index ${weekday}`)
     })
   }
 
   year(y: number, message?: string): DateRule {
     return this._add({
       kind: 'value',
-      fn: (d) => ((d.year() as number) === y ? null : message ?? `Year must be ${y}`)
+      fn: (d) => ((d.year() as number) === y ? null : (message ?? `Year must be ${y}`))
     })
   }
 
   month(m: number, message?: string): DateRule {
     return this._add({
       kind: 'value',
-      fn: (d) => ((d.month() as number) === m ? null : message ?? `Month must be ${m}`)
+      fn: (d) => ((d.month() as number) === m ? null : (message ?? `Month must be ${m}`))
     })
   }
 

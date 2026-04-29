@@ -39,11 +39,7 @@ export function prevBusinessDay(date: DateTime, holidays?: string[]): DateTime {
  * Count business days strictly between `start` and `end` (exclusive).
  * Returns negative when `end` is before `start`.
  */
-export function businessDaysBetween(
-  start: DateTime,
-  end: DateTime,
-  holidays?: string[]
-): number {
+export function businessDaysBetween(start: DateTime, end: DateTime, holidays?: string[]): number {
   const s = start.valueOf()
   const e = end.valueOf()
   if (s === e) return 0
