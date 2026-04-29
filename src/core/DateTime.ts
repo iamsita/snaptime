@@ -107,6 +107,10 @@ class DateTime {
   private readonly _d: Date
   private readonly _utc: boolean
   private _localeName: string | null
+  /** Forced offset minutes — set by `shiftZone`; null otherwise. */
+  private _offsetMinutes: number | null = null
+  /** IANA name attached by `shiftZone`; informational only. */
+  private _zoneName: string | null = null
 
   // Type-level extension hook for plugins
   declare ['constructor']: typeof DateTime
@@ -431,25 +435,60 @@ class DateTime {
   // Arithmetic
   // ─────────────────────────────────────────────────────────────────────────
 
-  add(n: number, unit: UnitInput): DateTime {
+  /**
+   * Add `n` of `unit`. Calendar units (day/week/fortnight/month/quarter/year/
+   * decade/century/millennium) advance via `Date.setX`, which preserves the
+   * wall-clock time across DST transitions in local mode. Sub-day units
+   * (hour/minute/second/millisecond) advance by absolute milliseconds — use
+   * `{ keepLocalTime: true }` if you want the wall-clock-preserving behavior
+   * for sub-day units as well (rare).
+   */
+  add(n: number, unit: UnitInput, opts: { keepLocalTime?: boolean } = {}): DateTime {
     const u = resolveUnit(unit)
     const c = this.clone()
-    if (u === 'month') return DateTime._wrap(_addMonths(c._d, n, this._mode()), this._utc, this._localeName)
+    const mode = this._mode()
+    if (u === 'month') return DateTime._wrap(_addMonths(c._d, n, mode), this._utc, this._localeName)
     if (u === 'quarter')
-      return DateTime._wrap(_addMonths(c._d, n * 3, this._mode()), this._utc, this._localeName)
-    if (u === 'year') return DateTime._wrap(_addYears(c._d, n, this._mode()), this._utc, this._localeName)
+      return DateTime._wrap(_addMonths(c._d, n * 3, mode), this._utc, this._localeName)
+    if (u === 'year') return DateTime._wrap(_addYears(c._d, n, mode), this._utc, this._localeName)
     if (u === 'decade')
-      return DateTime._wrap(_addYears(c._d, n * 10, this._mode()), this._utc, this._localeName)
+      return DateTime._wrap(_addYears(c._d, n * 10, mode), this._utc, this._localeName)
     if (u === 'century')
-      return DateTime._wrap(_addYears(c._d, n * 100, this._mode()), this._utc, this._localeName)
+      return DateTime._wrap(_addYears(c._d, n * 100, mode), this._utc, this._localeName)
     if (u === 'millennium')
-      return DateTime._wrap(_addYears(c._d, n * 1000, this._mode()), this._utc, this._localeName)
+      return DateTime._wrap(_addYears(c._d, n * 1000, mode), this._utc, this._localeName)
+    if (u === 'day' || u === 'date' || u === 'week' || u === 'fortnight') {
+      const get = mode === 'utc' ? UTC_GETTERS : LOCAL_GETTERS
+      const set = mode === 'utc' ? UTC_SETTERS : LOCAL_SETTERS
+      const factor = u === 'week' ? 7 : u === 'fortnight' ? 14 : 1
+      set.date(c._d, get.date(c._d) + n * factor)
+      return DateTime._wrap(c._d, this._utc, this._localeName)
+    }
+    if (opts.keepLocalTime && !this._utc) {
+      const get = LOCAL_GETTERS
+      const set = LOCAL_SETTERS
+      switch (u) {
+        case 'hour':
+          set.hour(c._d, get.hour(c._d) + n)
+          break
+        case 'minute':
+          set.minute(c._d, get.minute(c._d) + n)
+          break
+        case 'second':
+          set.second(c._d, get.second(c._d) + n)
+          break
+        case 'millisecond':
+          set.millisecond(c._d, get.millisecond(c._d) + n)
+          break
+      }
+      return DateTime._wrap(c._d, this._utc, this._localeName)
+    }
     const ms = msPerUnit(u)
     return DateTime._wrap(new Date(this.valueOf() + n * ms), this._utc, this._localeName)
   }
 
-  subtract(n: number, unit: UnitInput): DateTime {
-    return this.add(-n, unit)
+  subtract(n: number, unit: UnitInput, opts?: { keepLocalTime?: boolean }): DateTime {
+    return this.add(-n, unit, opts)
   }
 
   /** Difference between this and `other` in `unit`. Floored unless `floating`. */
@@ -799,7 +838,36 @@ class DateTime {
 
   /** UTC offset in minutes (positive = ahead of UTC). */
   utcOffset(): number {
+    if (this._offsetMinutes != null) return this._offsetMinutes
     return this._utc ? 0 : -this._d.getTimezoneOffset()
+  }
+
+  /**
+   * Return a new DateTime whose getters/format reflect the wall-clock time in
+   * the given IANA zone. Equivalent of Luxon's `setZone`. The underlying
+   * instant is preserved.
+   *
+   *   dt.shiftZone('Asia/Kathmandu').format('YYYY-MM-DD HH:mm Z')
+   */
+  shiftZone(zone: string): DateTime {
+    const offset = computeZoneOffsetMinutes(zone, this.valueOf())
+    const shifted = new DateTime(this.valueOf() + offset * 60_000, {
+      utc: true,
+      locale: this._localeName ?? undefined
+    })
+    shifted._offsetMinutes = offset
+    shifted._zoneName = zone
+    return shifted
+  }
+
+  /** Alias of {@link shiftZone}. */
+  setZone(zone: string): DateTime {
+    return this.shiftZone(zone)
+  }
+
+  /** IANA zone name attached via shiftZone, or null if untagged. */
+  zoneName(): string | null {
+    return this._zoneName
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -932,6 +1000,69 @@ class DateTime {
   }
   toUnix(): number {
     return this.unix()
+  }
+
+  // ── Carbon-style presets ─────────────────────────────────────────────────
+
+  /** "2026-04-29T12:34:56+00:00" — alias of {@link toRFC3339}. */
+  toAtomString(): string {
+    return this.toRFC3339()
+  }
+  /** "Wednesday, 29-Apr-2026 12:34:56 GMT" — RFC 850. */
+  toCookieString(): string {
+    return this.format('dddd, DD-MMM-YYYY HH:mm:ss [GMT]')
+  }
+  /** "2026-04-29T12:34:56+00:00" — W3C / ISO 8601 with offset. */
+  toW3cString(): string {
+    return this.toRFC3339()
+  }
+  /** "Wed, 29 Apr 2026 12:34:56 +0000" — RFC 1123 / RSS feed style. */
+  toRssString(): string {
+    return this.toRFC2822()
+  }
+  /** "Apr 29, 2026". */
+  toFormattedDateString(): string {
+    return this.format('MMM D, YYYY')
+  }
+  /** "Wed, Apr 29, 2026". */
+  toFormattedDayDateString(): string {
+    return this.format('ddd, MMM D, YYYY')
+  }
+  /** "Wed, Apr 29, 2026 12:34 PM". */
+  toDayDateTimeString(): string {
+    return this.format('ddd, MMM D, YYYY h:mm A')
+  }
+  /** "12:34:56". */
+  toTimeString(): string {
+    return this.format('HH:mm:ss')
+  }
+  /** "2026-04-29". */
+  toDateString(): string {
+    return this.format('YYYY-MM-DD')
+  }
+  /** "12:34:56" using locale's LTS preset. */
+  toLongTimeString(): string {
+    return this.format('LTS')
+  }
+  /** Locale's L preset. */
+  toLocaleDateString(): string {
+    return this.format('L')
+  }
+  /** Locale's LL preset. */
+  toLocaleLongDateString(): string {
+    return this.format('LL')
+  }
+  /** Locale's LLLL preset. */
+  toLocaleFullString(): string {
+    return this.format('LLLL')
+  }
+  /** "1d", "2h", "45m" — best-effort short relative-to-now. */
+  toShortString(): string {
+    const ms = Math.abs(this.valueOf() - Clock.now())
+    if (ms < 60_000) return 'now'
+    if (ms < 3_600_000) return `${Math.round(ms / 60_000)}m`
+    if (ms < 86_400_000) return `${Math.round(ms / 3_600_000)}h`
+    return `${Math.round(ms / 86_400_000)}d`
   }
 
   toObject(): Required<Omit<DateObject, 'day'>> & { day: number } {
@@ -1126,7 +1257,7 @@ class DateTime {
       isoWeekYear: this.isoWeekYear(),
       quarter: this.quarter(),
       nativeDate: this._d,
-      offsetMinutes: this._utc ? 0 : undefined
+      offsetMinutes: this._offsetMinutes ?? (this._utc ? 0 : undefined)
     }
   }
 
@@ -1142,5 +1273,27 @@ class DateTime {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface DateTime extends DateTimePluginMethods {}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helper — IANA zone offset minutes for a specific instant.
+// Inlined here to avoid an import cycle with src/ecosystem/Timezone.ts.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function computeZoneOffsetMinutes(zone: string, ms: number): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: zone,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: false
+  }).formatToParts(new Date(ms))
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0)
+  const hour = get('hour') % 24
+  const tzMs = Date.UTC(get('year'), get('month') - 1, get('day'), hour, get('minute'), get('second'))
+  return Math.round((tzMs - ms) / 60_000)
+}
 
 export default DateTime

@@ -34,6 +34,14 @@ import { Locales } from './locale/registry'
 import { Macros } from './plugin/macros'
 import { Clock } from './core/Clock'
 import { resolveUnit } from './core/units'
+import { toNumerals, toWesternNumerals, type NumeralSystem } from './core/numerals'
+
+// New top-level modules (also available via sub-path imports)
+import RangeSet from './collections/RangeSet'
+import { BikramSambat } from './calendars/bs'
+import { RRule, parseRRule, stringifyRRule } from './rrule'
+import * as Astronomy from './astronomy'
+import { DateRule } from './validate'
 
 import type {
   Unit,
@@ -99,10 +107,15 @@ export const dateTime = Object.assign(
     duration: (n: number, unit: UnitInput) => DateTime.duration(n, unit),
     range: (start: DateInput, end: DateInput) => new DateRange(start, end),
     period: (opts: DatePeriodOptions) => new DatePeriod(opts),
+    rangeSet: (ranges: ConstructorParameters<typeof RangeSet>[0]) => new RangeSet(ranges),
     collection: (dates: DateInput[]) => new DateCollection(dates),
     tz: (zone: string) => new Timezone(zone),
     cron: (expression: string) => new Cron(expression),
     natural: (input: string, ref?: DateTime) => parseNatural(input, ref),
+    rrule: (input: string) => RRule.parse(input),
+    rule: () => DateRule.empty(),
+    bs: (input: DateInput) =>
+      BikramSambat.fromAD(input instanceof DateTime ? input : new DateTime(input)),
 
     // Locale
     locale: (name?: string, data?: LocaleData) => {
@@ -138,12 +151,23 @@ export const dateTime = Object.assign(
     Clock,
     NaturalLanguage,
 
+    // New top-level modules
+    BikramSambat,
+    RRule,
+    Astronomy,
+    DateRule,
+
+    // Numeral conversion
+    toNumerals,
+    toWesternNumerals,
+
     // Constructors (escape hatches)
     DateTime,
     Duration,
     DateRange,
     DatePeriod,
     DateCollection,
+    RangeSet,
     Timezone,
     Cron
   }
@@ -160,8 +184,17 @@ export {
   DateRange,
   DatePeriod,
   DateCollection,
+  RangeSet,
   Timezone,
   Cron,
+
+  // New modules
+  BikramSambat,
+  RRule,
+  parseRRule,
+  stringifyRRule,
+  Astronomy,
+  DateRule,
 
   // Functions
   parseNatural,
@@ -173,6 +206,8 @@ export {
   businessDaysBetween,
   getHolidays,
   resolveUnit,
+  toNumerals,
+  toWesternNumerals,
 
   // Registries
   Locales,
@@ -222,8 +257,14 @@ export type {
   DateTimePluginMethods,
   DatePeriodOptions,
   ResolvedLocale,
-  NaturalLanguagePattern
+  NaturalLanguagePattern,
+  NumeralSystem
 }
+
+export type { ValidationResult } from './validate'
+export type { Freq, Weekday as RRuleWeekday, WeekdayWithN, RRuleOptions } from './rrule'
+export type { BSDate } from './calendars/bs'
+export type { MoonPhase, MoonPhaseName, Season } from './astronomy'
 
 // Auto-load any user extensions on first import. Side-effecting only.
 import './extensions/index'

@@ -1,13 +1,18 @@
 {
   "name": "@anilkumarthakur/d8",
   "private": false,
-  "version": "0.0.0",
-  "description": "A modern, zero-dependency TypeScript date/time library — formatting, parsing, timezones, business days, cron, and natural language.",
+  "version": "0.1.0",
+  "description": "Modern zero-dependency TypeScript date/time library: formatting, parsing, timezones, business days, cron, RRULE, natural language, Bikram Sambat, astronomy, validators, and more.",
   "type": "module",
-  "main": "dist/index.umd.js",
-  "module": "dist/index.es.js",
-  "types": "dist/index.d.ts",
-  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": [
+    "./dist/locale/*.js",
+    "./dist/locale/*.cjs",
+    "./src/locale/locales/*.ts",
+    "./src/locale/default.ts"
+  ],
   "engines": {
     "node": ">=18"
   },
@@ -23,7 +28,8 @@
     "access": "public"
   },
   "files": [
-    "dist"
+    "dist",
+    "src"
   ],
   "keywords": [
     "date",
@@ -31,23 +37,65 @@
     "datetime",
     "typescript",
     "timezone",
+    "iana",
     "cron",
+    "rrule",
+    "recurrence",
     "duration",
     "business-days",
+    "holidays",
     "date-formatting",
     "date-parsing",
     "natural-language",
     "zero-dependency",
     "iso-8601",
     "calendar",
-    "fiscal-year"
+    "bikram-sambat",
+    "nepali",
+    "astronomy",
+    "sunrise",
+    "moon-phase",
+    "i18n",
+    "fiscal-year",
+    "validator"
   ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.es.js",
-      "require": "./dist/index.umd.js"
-    }
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./rrule": {
+      "types": "./dist/rrule/index.d.ts",
+      "import": "./dist/rrule.js",
+      "require": "./dist/rrule.cjs"
+    },
+    "./astronomy": {
+      "types": "./dist/astronomy/index.d.ts",
+      "import": "./dist/astronomy.js",
+      "require": "./dist/astronomy.cjs"
+    },
+    "./validate": {
+      "types": "./dist/validate/index.d.ts",
+      "import": "./dist/validate.js",
+      "require": "./dist/validate.cjs"
+    },
+    "./calendars/bs": {
+      "types": "./dist/calendars/bs/index.d.ts",
+      "import": "./dist/calendars/bs.js",
+      "require": "./dist/calendars/bs.cjs"
+    },
+    "./collections/RangeSet": {
+      "types": "./dist/collections/RangeSet.d.ts",
+      "import": "./dist/collections/RangeSet.js",
+      "require": "./dist/collections/RangeSet.cjs"
+    },
+    "./locale/*": {
+      "types": "./dist/locale/*.d.ts",
+      "import": "./dist/locale/*.js",
+      "require": "./dist/locale/*.cjs"
+    },
+    "./package.json": "./package.json"
   },
   "author": "Anil Kumar Thakur",
   "license": "MIT",
@@ -78,13 +126,11 @@
     "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.21.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.1",
     "vite": "^8.0.1",
     "vite-plugin-dts": "^4.5.4",
     "vitepress": "^1.6.4"
-  },
-  "dependencies": {
-    "tsx": "^4.21.0"
   }
 }
