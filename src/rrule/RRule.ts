@@ -225,7 +225,7 @@ export class RRule implements Iterable<DateTime> {
     candidates = this._fanOutTime(candidates, dtstart)
 
     // BY filters that always apply post-expansion
-    candidates = candidates.filter((d) => this._matchesByFilters(d, dtstart))
+    candidates = candidates.filter((d) => this._matchesByFilters(d))
     candidates.sort((a, b) => a.getTime() - b.getTime())
     return candidates
   }
@@ -335,7 +335,7 @@ export class RRule implements Iterable<DateTime> {
     return out
   }
 
-  private _matchesByFilters(d: Date, _dtstart: Date): boolean {
+  private _matchesByFilters(d: Date): boolean {
     const o = this.options
     if (o.bymonth && !o.bymonth.includes(d.getMonth() + 1)) return false
     if (o.byyearday) {

@@ -7,8 +7,8 @@
 //
 //   DateTime.macro('greet', function () { return `hi at ${this.format('LT')}` })
 //
-// Type-safety: extend `DateTimePluginMethods` via declaration merging so the
-// macro shows up on DateTime instances in TypeScript.
+// Type-safety: augment the DateTime interface via `declare module` in your
+// own code so registered macros are statically typed.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import type DateTime from '../core/DateTime'

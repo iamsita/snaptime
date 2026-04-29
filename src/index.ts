@@ -69,8 +69,7 @@ import type {
   CronField,
   PluginFn,
   Macro,
-  StaticMacro,
-  DateTimePluginMethods
+  StaticMacro
 } from './core/types'
 import type { DatePeriodOptions } from './collections/DatePeriod'
 import type { ResolvedLocale } from './locale/registry'
@@ -254,7 +253,6 @@ export type {
   PluginFn,
   Macro,
   StaticMacro,
-  DateTimePluginMethods,
   DatePeriodOptions,
   ResolvedLocale,
   NaturalLanguagePattern,

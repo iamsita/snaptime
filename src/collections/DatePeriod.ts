@@ -116,7 +116,8 @@ export default class DatePeriod implements Iterable<DateTime> {
 
   count(): number {
     let n = 0
-    for (const _ of this) n++
+    const it = this[Symbol.iterator]()
+    while (!it.next().done) n++
     return n
   }
 

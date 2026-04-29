@@ -49,7 +49,6 @@ export const BS_MONTH_NAMES_EN = [
 ]
 export const BS_WEEKDAYS_NE = ['आइतबार', 'सोमबार', 'मंगलबार', 'बुधबार', 'बिहीबार', 'शुक्रबार', 'शनिबार']
 
-/* eslint-disable prettier/prettier */
 export const BS_MONTHS: number[][] = [
   /* 2000 */ [30, 32, 31, 32, 31, 30, 30, 30, 29, 30, 30, 30],
   /* 2001 */ [31, 31, 32, 32, 31, 30, 30, 29, 30, 29, 30, 30],

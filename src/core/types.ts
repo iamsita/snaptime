@@ -279,16 +279,18 @@ export type Macro = (this: DateTime, ...args: unknown[]) => unknown
 export type StaticMacro = (...args: unknown[]) => unknown
 
 /**
- * Augment this interface via declaration merging to give types to your macros.
+ * Type-safe macro extension is done by augmenting the DateTime class
+ * interface directly via TypeScript module augmentation:
  *
  * @example
+ *   import type {} from '@anilkumarthakur/d8'
  *   declare module '@anilkumarthakur/d8' {
- *     interface DateTimePluginMethods {
+ *     interface DateTime {
  *       greet(): string
  *     }
  *   }
+ *
+ * No additional helper interface is needed — TypeScript merges your
+ * declaration into the class's instance type, and any registered macro of
+ * the same name is then statically typed.
  */
-export interface DateTimePluginMethods {
-  // Intentionally empty — extended by users.
-  [key: string]: unknown
-}

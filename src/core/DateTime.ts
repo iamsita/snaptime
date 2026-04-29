@@ -10,8 +10,7 @@ import type {
   FiscalConfig,
   PreciseDiffResult,
   AgeResult,
-  CountdownResult,
-  DateTimePluginMethods
+  CountdownResult
 } from './types'
 import { Clock } from './Clock'
 import { resolveUnit, msPerUnit } from './units'
@@ -173,8 +172,16 @@ class DateTime {
     return DateTime
   }
 
-  /** Register an instance macro. Use declaration merging on
-   *  {@link DateTimePluginMethods} for type-safety. */
+  /**
+   * Register an instance macro. To get type-safety on the new method, augment
+   * the DateTime interface in your own code:
+   *
+   *   declare module '@anilkumarthakur/d8' {
+   *     interface DateTime {
+   *       greet(): string
+   *     }
+   *   }
+   */
   static macro(name: string, fn: MacroFn): typeof DateTime {
     Macros.register(name, fn)
     Macros.apply(DateTime)
@@ -1268,11 +1275,6 @@ class DateTime {
     return out
   }
 }
-
-// ── Module augmentation hook for plugins ────────────────────────────────────
-
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface DateTime extends DateTimePluginMethods {}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper — IANA zone offset minutes for a specific instant.
