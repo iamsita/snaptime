@@ -27,4 +27,8 @@ coverage
 # VitePress documentation
 docs/.vitepress/dist
 docs/.vitepress/cache
+docs/.vitepress/.temp
+.vitepress/dist
+.vitepress/cache
+.vitepress/.temp
 
