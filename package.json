@@ -1,5 +1,5 @@
 {
-  "name": "@anilkumarthakur/d8",
+  "name": "@anilkumarthakur/date",
   "private": false,
   "version": "0.0.0",
   "description": "A modern, zero-dependency TypeScript date/time library — formatting, parsing, timezones, business days, cron, and natural language.",
