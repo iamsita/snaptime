@@ -1,5 +1,20 @@
-import DateFormat from '../core/DateFormat'
-import type { Unit } from '../core/types'
+// ─────────────────────────────────────────────────────────────────────────────
+// Natural-language date parser.
+//
+// Built around a pluggable list of {@link Pattern}s. Each pattern is a regex
+// + handler. Users can register their own patterns to extend recognition
+// without forking the library:
+//
+//   NaturalLanguage.addPattern({
+//     match: /^cyber-monday$/i,
+//     parse: (_, ref) => ref.firstOf('month', 1).add(28, 'day') // 4th Mon Nov, etc.
+//   })
+//
+// Open/Closed in action.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import DateTime from '../core/DateTime'
+import type { UnitInput } from '../core/types'
 
 const WEEKDAYS: Record<string, number> = {
   sunday: 0,
@@ -26,11 +41,11 @@ const MONTHS: Record<string, number> = {
   december: 12
 }
 
-const MONTH_PATTERN =
-  'january|february|march|april|may|june|july|august|september|october|november|december'
-const WEEKDAY_PATTERN = 'sunday|monday|tuesday|wednesday|thursday|friday|saturday'
+const MONTH_RE = Object.keys(MONTHS).join('|')
+const WEEKDAY_RE = Object.keys(WEEKDAYS).join('|')
+const UNIT_RE = '(?:second|minute|hour|day|week|month|year)s?'
 
-const UNIT_MAP: Record<string, Unit> = {
+const UNIT_MAP: Record<string, UnitInput> = {
   second: 'second',
   seconds: 'second',
   minute: 'minute',
@@ -47,36 +62,20 @@ const UNIT_MAP: Record<string, Unit> = {
   years: 'year'
 }
 
-function parseMonth(s: string): number | undefined {
-  return MONTHS[s.toLowerCase()]
+export interface Pattern {
+  match: RegExp
+  parse: (m: RegExpExecArray, ref: DateTime) => DateTime
 }
 
-function parseWeekday(s: string): number | undefined {
-  return WEEKDAYS[s.toLowerCase()]
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
-function nthWeekdayOfMonth(n: number, weekday: number, month: number, year: number): DateFormat {
-  let d = new DateFormat(new Date(year, month - 1, 1))
-  const firstDow = d.get('day')
-  let offset = (weekday - firstDow + 7) % 7
-  offset += (n - 1) * 7
-  d = d.add(offset, 'day')
-  if (d.get('month') !== month) return new DateFormat(NaN)
-  return d
-}
-
-/**
- * Apply a time string like "3pm", "10:30", "14:45" to a DateFormat.
- */
-function applyTime(date: DateFormat, timeStr: string): DateFormat {
+function applyTime(date: DateTime, timeStr: string): DateTime {
   const lower = timeStr.toLowerCase().trim()
-
-  // "noon"
   if (lower === 'noon') return date.set('hour', 12).set('minute', 0).set('second', 0)
-  // "midnight"
   if (lower === 'midnight') return date.set('hour', 0).set('minute', 0).set('second', 0)
 
-  // "3pm", "3:30pm", "3:30:15pm", "15:30", "3:30 pm"
   const m = lower.match(/^(\d{1,2})(?::(\d{2}))?(?::(\d{2}))?\s*(am|pm)?$/)
   if (!m) return date
 
@@ -84,129 +83,169 @@ function applyTime(date: DateFormat, timeStr: string): DateFormat {
   const min = m[2] ? parseInt(m[2], 10) : 0
   const sec = m[3] ? parseInt(m[3], 10) : 0
   const ampm = m[4]
-
   if (ampm === 'pm' && h < 12) h += 12
   if (ampm === 'am' && h === 12) h = 0
-
   return date.set('hour', h).set('minute', min).set('second', sec)
 }
 
-export default function parseNatural(input: string, ref?: DateFormat): DateFormat {
-  const base = ref ?? new DateFormat()
-  const s = input.trim()
-  const lower = s.toLowerCase()
+function nthWeekdayOfMonth(n: number, weekday: number, month: number, year: number): DateTime {
+  let d = new DateTime(new Date(year, month - 1, 1))
+  const firstDow = d.get('day')
+  let offset = (weekday - firstDow + 7) % 7
+  offset += (n - 1) * 7
+  d = d.add(offset, 'day')
+  if (d.get('month') !== month) return new DateTime(NaN)
+  return d
+}
 
-  // "now", "today", "tomorrow", "yesterday"
-  if (lower === 'now' || lower === 'today') return base
-  if (lower === 'tomorrow') return base.add(1, 'day')
-  if (lower === 'yesterday') return base.subtract(1, 'day')
-  if (lower === 'noon') return base.set('hour', 12).set('minute', 0).set('second', 0)
-  if (lower === 'midnight') return base.set('hour', 0).set('minute', 0).set('second', 0)
+// ─────────────────────────────────────────────────────────────────────────────
+// Built-in patterns — order matters: first match wins.
+// ─────────────────────────────────────────────────────────────────────────────
 
-  // "beginning of day/week/month/year"
-  let m = lower.match(/^beginning\s+of\s+(day|week|month|year)$/)
-  if (m) return base.startOf(m[1] as Unit | 'week')
+const BUILTIN_PATTERNS: Pattern[] = [
+  {
+    match: /^(?:now|today)$/,
+    parse: (_, ref) => ref
+  },
+  { match: /^tomorrow$/, parse: (_, ref) => ref.add(1, 'day') },
+  { match: /^yesterday$/, parse: (_, ref) => ref.subtract(1, 'day') },
+  { match: /^noon$/, parse: (_, ref) => ref.set('hour', 12).set('minute', 0).set('second', 0) },
+  { match: /^midnight$/, parse: (_, ref) => ref.set('hour', 0).set('minute', 0).set('second', 0) },
 
-  // "end of day/week/month/year"
-  m = lower.match(/^end\s+of\s+(day|week|month|year)$/)
-  if (m) return base.endOf(m[1] as Unit | 'week')
+  {
+    match: /^(?:beginning|start)\s+of\s+(day|week|month|year)$/,
+    parse: (m, ref) => ref.startOf(m[1] as UnitInput)
+  },
+  {
+    match: /^end\s+of\s+(day|week|month|year)$/,
+    parse: (m, ref) => ref.endOf(m[1] as UnitInput)
+  },
+  {
+    match: /^this\s+(week|month|year)$/,
+    parse: (m, ref) => ref.startOf(m[1] as UnitInput)
+  },
 
-  // "this week/month/year"
-  m = lower.match(/^this\s+(week|month|year)$/)
-  if (m) return base.startOf(m[1] as Unit | 'week')
-
-  // "tomorrow at 3pm", "yesterday at 10:30"
-  m = lower.match(/^(today|tomorrow|yesterday)\s+at\s+(.+)$/)
-  if (m) {
-    let d = base
-    if (m[1] === 'tomorrow') d = base.add(1, 'day')
-    else if (m[1] === 'yesterday') d = base.subtract(1, 'day')
-    return applyTime(d, m[2])
-  }
-
-  // "next/last Monday..Sunday" with optional "at TIME"
-  m = lower.match(new RegExp(`^(next|last)\\s+(${WEEKDAY_PATTERN})(?:\\s+at\\s+(.+))?$`))
-  if (m) {
-    const dir = m[1]
-    const targetDay = parseWeekday(m[2])!
-    const currentDay = base.get('day')
-    let d: DateFormat
-    if (dir === 'next') {
-      let diff = (targetDay - currentDay + 7) % 7
-      if (diff === 0) diff = 7
-      d = base.add(diff, 'day')
-    } else {
-      let diff = (currentDay - targetDay + 7) % 7
-      if (diff === 0) diff = 7
-      d = base.subtract(diff, 'day')
+  {
+    match: /^(today|tomorrow|yesterday)\s+at\s+(.+)$/,
+    parse: (m, ref) => {
+      const word = m[1]
+      let d = ref
+      if (word === 'tomorrow') d = ref.add(1, 'day')
+      else if (word === 'yesterday') d = ref.subtract(1, 'day')
+      return applyTime(d, m[2])
     }
-    return m[3] ? applyTime(d, m[3]) : d
+  },
+
+  {
+    match: new RegExp(`^(next|last)\\s+(${WEEKDAY_RE})(?:\\s+at\\s+(.+))?$`),
+    parse: (m, ref) => {
+      const target = WEEKDAYS[m[2]]
+      const cur = ref.get('day')
+      let d: DateTime
+      if (m[1] === 'next') {
+        let diff = (target - cur + 7) % 7
+        if (diff === 0) diff = 7
+        d = ref.add(diff, 'day')
+      } else {
+        let diff = (cur - target + 7) % 7
+        if (diff === 0) diff = 7
+        d = ref.subtract(diff, 'day')
+      }
+      return m[3] ? applyTime(d, m[3]) : d
+    }
+  },
+
+  {
+    match: /^(next|last)\s+(week|month|year)$/,
+    parse: (m, ref) => {
+      const u = UNIT_MAP[m[2]]
+      return m[1] === 'next' ? ref.add(1, u) : ref.subtract(1, u)
+    }
+  },
+
+  {
+    match: new RegExp(`^(\\d+)\\s+(${UNIT_RE})\\s+ago$`),
+    parse: (m, ref) => ref.subtract(parseInt(m[1], 10), UNIT_MAP[m[2]])
+  },
+  {
+    match: new RegExp(`^in\\s+(\\d+)\\s+(${UNIT_RE})$`),
+    parse: (m, ref) => ref.add(parseInt(m[1], 10), UNIT_MAP[m[2]])
+  },
+  {
+    match: new RegExp(`^(\\d+)\\s+(${UNIT_RE})\\s+from\\s+now$`),
+    parse: (m, ref) => ref.add(parseInt(m[1], 10), UNIT_MAP[m[2]])
+  },
+
+  {
+    match: new RegExp(`^last\\s+day\\s+of\\s+(${MONTH_RE})(?:\\s+(\\d{4}))?$`),
+    parse: (m, ref) => {
+      const month = MONTHS[m[1]]
+      const year = m[2] ? parseInt(m[2], 10) : ref.get('year')
+      const lastDay = new Date(year, month, 0).getDate()
+      return new DateTime(new Date(year, month - 1, lastDay))
+    }
+  },
+
+  {
+    match: new RegExp(`^first\\s+day\\s+of\\s+(${MONTH_RE})(?:\\s+(\\d{4}))?$`),
+    parse: (m, ref) => {
+      const month = MONTHS[m[1]]
+      const year = m[2] ? parseInt(m[2], 10) : ref.get('year')
+      return new DateTime(new Date(year, month - 1, 1))
+    }
+  },
+
+  {
+    match: new RegExp(
+      `^(\\d+)(?:st|nd|rd|th)\\s+(${WEEKDAY_RE})\\s+of\\s+(${MONTH_RE})(?:\\s+(\\d{4}))?$`
+    ),
+    parse: (m, ref) =>
+      nthWeekdayOfMonth(
+        parseInt(m[1], 10),
+        WEEKDAYS[m[2]],
+        MONTHS[m[3]],
+        m[4] ? parseInt(m[4], 10) : ref.get('year')
+      )
   }
+]
 
-  // "next/last week/month/year"
-  m = lower.match(/^(next|last)\s+(week|month|year)$/)
-  if (m) {
-    const unit = UNIT_MAP[m[2]]!
-    return m[1] === 'next' ? base.add(1, unit) : base.subtract(1, unit)
+// ─────────────────────────────────────────────────────────────────────────────
+// Public API
+// ─────────────────────────────────────────────────────────────────────────────
+
+const userPatterns: Pattern[] = []
+
+export const NaturalLanguage = {
+  /** Try each pattern in order; returns invalid DateTime if none matches. */
+  parse(input: string, ref?: DateTime): DateTime {
+    const base = ref ?? new DateTime()
+    const lower = input.trim().toLowerCase()
+    for (const p of [...userPatterns, ...BUILTIN_PATTERNS]) {
+      const m = p.match.exec(lower)
+      if (m) return p.parse(m, base)
+    }
+    return new DateTime(NaN)
+  },
+
+  /** Append a custom pattern. Custom patterns are tried before built-ins. */
+  addPattern(p: Pattern): void {
+    userPatterns.unshift(p)
+  },
+
+  /** Remove a previously-added custom pattern. */
+  removePattern(p: Pattern): boolean {
+    const i = userPatterns.indexOf(p)
+    if (i < 0) return false
+    userPatterns.splice(i, 1)
+    return true
+  },
+
+  /** Reset to built-ins only. */
+  reset(): void {
+    userPatterns.length = 0
   }
+}
 
-  // "N seconds/minutes/hours/days/weeks/months/years ago"
-  m = lower.match(/^(\d+)\s+(seconds?|minutes?|hours?|days?|weeks?|months?|years?)\s+ago$/)
-  if (m) {
-    const n = parseInt(m[1], 10)
-    const unit = UNIT_MAP[m[2]]!
-    return base.subtract(n, unit)
-  }
-
-  // "in N seconds/minutes/hours/days/weeks/months/years"
-  m = lower.match(/^in\s+(\d+)\s+(seconds?|minutes?|hours?|days?|weeks?|months?|years?)$/)
-  if (m) {
-    const n = parseInt(m[1], 10)
-    const unit = UNIT_MAP[m[2]]!
-    return base.add(n, unit)
-  }
-
-  // "N seconds/minutes/hours/days/weeks/months/years from now"
-  m = lower.match(/^(\d+)\s+(seconds?|minutes?|hours?|days?|weeks?|months?|years?)\s+from\s+now$/)
-  if (m) {
-    const n = parseInt(m[1], 10)
-    const unit = UNIT_MAP[m[2]]!
-    return base.add(n, unit)
-  }
-
-  // "last day of March" or "last day of March 2026"
-  m = lower.match(new RegExp(`^last\\s+day\\s+of\\s+(${MONTH_PATTERN})(?:\\s+(\\d{4}))?$`))
-  if (m) {
-    const month = parseMonth(m[1])!
-    const year = m[2] ? parseInt(m[2], 10) : base.get('year')
-    const lastDay = new Date(year, month, 0).getDate()
-    return new DateFormat(new Date(year, month - 1, lastDay))
-  }
-
-  // "first day of March" or "first day of March 2026"
-  m = lower.match(new RegExp(`^first\\s+day\\s+of\\s+(${MONTH_PATTERN})(?:\\s+(\\d{4}))?$`))
-  if (m) {
-    const month = parseMonth(m[1])!
-    const year = m[2] ? parseInt(m[2], 10) : base.get('year')
-    return new DateFormat(new Date(year, month - 1, 1))
-  }
-
-  // "Nth weekday of month [year]" e.g. "3rd Friday of January" or "2nd Tuesday of March 2026"
-  m = lower.match(
-    new RegExp(
-      `^(\\d+)(?:st|nd|rd|th)\\s+(${WEEKDAY_PATTERN})\\s+of\\s+(${MONTH_PATTERN})(?:\\s+(\\d{4}))?$`
-    )
-  )
-  if (m) {
-    const n = parseInt(m[1], 10)
-    const weekday = parseWeekday(m[2])!
-    const month = parseMonth(m[3])!
-    const year = m[4] ? parseInt(m[4], 10) : base.get('year')
-    return nthWeekdayOfMonth(n, weekday, month, year)
-  }
-
-  // "next Monday at 3pm" already handled above via the weekday pattern
-
-  // No pattern matched
-  return new DateFormat(NaN)
+export default function parseNatural(input: string, ref?: DateTime): DateTime {
+  return NaturalLanguage.parse(input, ref)
 }

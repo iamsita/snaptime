@@ -1,7 +1,7 @@
-/**
- * Pure relative-time functions — no DateFormat dependency.
- * Receives timestamps and date components, returns results.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// Relative-time, calendar-label, precise-diff, age, countdown.
+// All functions are pure — they take primitives and return primitives.
+// ─────────────────────────────────────────────────────────────────────────────
 
 import { pad, pluralize } from '../core/helpers'
 import type {
@@ -12,99 +12,98 @@ import type {
   LocaleCalendar
 } from '../core/types'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// fromNow — relative time string
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Thresholds (milliseconds → unit). Mirrors Moment.js semantics. ─────────
 
-export function relativeTime(diffMs: number, relativeTimeLocale?: LocaleRelativeTime): string {
-  const isNeg = diffMs < 0
-  const absMs = Math.abs(diffMs)
+const SEC = 1_000
+const MIN = 60 * SEC
+const HOUR = 60 * MIN
+const DAY = 24 * HOUR
+const MONTH = 30 * DAY
+const YEAR = 365 * DAY
 
-  let value: number
-  let unit: string
+interface UnitThreshold {
+  bound: number
+  divisor: number
+  singularKey: keyof LocaleRelativeTime
+  pluralKey: keyof LocaleRelativeTime
+}
 
-  if (absMs < 1000) {
-    value = Math.round(absMs)
-    unit = value === 1 ? 'millisecond' : 'milliseconds'
-  } else if (absMs < 60_000) {
-    value = Math.round(absMs / 1000)
-    unit = value === 1 ? 'second' : 'seconds'
-  } else if (absMs < 3_600_000) {
-    value = Math.round(absMs / 60_000)
-    unit = value === 1 ? 'minute' : 'minutes'
-  } else if (absMs < 86_400_000) {
-    value = Math.round(absMs / 3_600_000)
-    unit = value === 1 ? 'hour' : 'hours'
-  } else if (absMs < 2_592_000_000) {
-    value = Math.round(absMs / 86_400_000)
-    unit = value === 1 ? 'day' : 'days'
-  } else if (absMs < 31_536_000_000) {
-    value = Math.round(absMs / 2_592_000_000)
-    unit = value === 1 ? 'month' : 'months'
-  } else {
-    value = Math.round(absMs / 31_536_000_000)
-    unit = value === 1 ? 'year' : 'years'
-  }
+const RELATIVE_THRESHOLDS: UnitThreshold[] = [
+  { bound: 45 * SEC, divisor: SEC, singularKey: 's', pluralKey: 's' },
+  { bound: MIN, divisor: SEC, singularKey: 'ss', pluralKey: 'ss' },
+  { bound: 90 * MIN, divisor: MIN, singularKey: 'm', pluralKey: 'mm' },
+  { bound: 22 * HOUR, divisor: HOUR, singularKey: 'h', pluralKey: 'hh' },
+  { bound: 26 * DAY, divisor: DAY, singularKey: 'd', pluralKey: 'dd' },
+  { bound: 11 * MONTH, divisor: MONTH, singularKey: 'M', pluralKey: 'MM' },
+  { bound: Infinity, divisor: YEAR, singularKey: 'y', pluralKey: 'yy' }
+]
 
-  // Use locale relativeTime if available
-  if (relativeTimeLocale) {
-    const keyMap: Record<string, string> = {
-      millisecond: 's',
-      milliseconds: 's',
-      second: 's',
-      seconds: 'ss',
-      minute: 'm',
-      minutes: 'mm',
-      hour: 'h',
-      hours: 'hh',
-      day: 'd',
-      days: 'dd',
-      month: 'M',
-      months: 'MM',
-      year: 'y',
-      years: 'yy'
+export function relativeTime(
+  diffMs: number,
+  loc?: LocaleRelativeTime,
+  withoutSuffix = false
+): string {
+  const isPast = diffMs < 0
+  const abs = Math.abs(diffMs)
+
+  let value = 0
+  let key: keyof LocaleRelativeTime = 's'
+  for (const th of RELATIVE_THRESHOLDS) {
+    if (abs < th.bound) {
+      value = Math.round(abs / th.divisor) || 1
+      key = value === 1 ? th.singularKey : th.pluralKey
+      break
     }
-    const tmpl = relativeTimeLocale[keyMap[unit] as keyof LocaleRelativeTime]
-    const label = tmpl.replace('%d', String(value))
-    return isNeg
-      ? relativeTimeLocale.past.replace('%s', label)
-      : relativeTimeLocale.future.replace('%s', label)
   }
 
-  // Default English
-  const label = `${value} ${unit}`
-  return isNeg ? `${label} ago` : `in ${label}`
+  const fallback: LocaleRelativeTime = {
+    future: 'in %s',
+    past: '%s ago',
+    s: 'a few seconds',
+    ss: '%d seconds',
+    m: 'a minute',
+    mm: '%d minutes',
+    h: 'an hour',
+    hh: '%d hours',
+    d: 'a day',
+    dd: '%d days',
+    M: 'a month',
+    MM: '%d months',
+    y: 'a year',
+    yy: '%d years'
+  }
+  const L = loc ?? fallback
+  const tmpl = (L[key] ?? fallback[key]) as string
+  const label = tmpl.replace('%d', String(value))
+
+  if (withoutSuffix) return label
+  return (isPast ? L.past : L.future).replace('%s', label)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// calendar — "Today at 3:00 PM" style
+// Calendar label — "Today at 3:00 PM" style.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function calendarLabel(
-  thisMs: number,
-  todayStartMs: number,
+  diffDays: number,
   formattedTime: string,
   formattedDate: string,
-  calendarLocale?: LocaleCalendar
+  weekdayName: string,
+  loc?: LocaleCalendar
 ): string {
-  const diff = thisMs - todayStartMs
-  const D = 864e5
+  const sub = (tpl: string) =>
+    tpl.replace('{time}', formattedTime).replace('{day}', weekdayName).replace('L', formattedDate)
 
-  if (diff >= 0 && diff < D)
-    return calendarLocale?.sameDay?.replace('{time}', formattedTime) ?? `Today at ${formattedTime}`
-  if (diff < 0 && diff > -D)
-    return (
-      calendarLocale?.lastDay?.replace('{time}', formattedTime) ?? `Yesterday at ${formattedTime}`
-    )
-  if (diff >= D && diff < 2 * D)
-    return (
-      calendarLocale?.nextDay?.replace('{time}', formattedTime) ?? `Tomorrow at ${formattedTime}`
-    )
-  return calendarLocale?.sameElse ?? formattedDate
+  if (diffDays >= 0 && diffDays < 1) return sub(loc?.sameDay ?? '[Today at] {time}')
+  if (diffDays >= 1 && diffDays < 2) return sub(loc?.nextDay ?? '[Tomorrow at] {time}')
+  if (diffDays >= 2 && diffDays < 7) return sub(loc?.nextWeek ?? '{day} [at] {time}')
+  if (diffDays < 0 && diffDays >= -1) return sub(loc?.lastDay ?? '[Yesterday at] {time}')
+  if (diffDays < -1 && diffDays >= -7) return sub(loc?.lastWeek ?? '[Last] {day} [at] {time}')
+  return sub(loc?.sameElse ?? formattedDate)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// preciseDiff — component-by-component difference
+// Precise diff — calendar-correct year/month/day/h/m/s/ms breakdown.
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface DateParts {
@@ -117,25 +116,15 @@ interface DateParts {
   millisecond: number
 }
 
-export function preciseDiff(
-  aMs: number,
-  bMs: number,
-  aParts: DateParts,
-  bParts: DateParts,
-  daysInPrevMonth: number
-): PreciseDiffResult {
-  const isAfter = bMs >= aMs
-  const lo = isAfter ? aParts : bParts
-  const hi = isAfter ? bParts : aParts
-  const dim = isAfter ? daysInPrevMonth : daysInPrevMonth
-
-  let years = hi.year - lo.year
-  let months = hi.month - lo.month
-  let days = hi.date - lo.date
-  let hours = hi.hour - lo.hour
-  let minutes = hi.minute - lo.minute
-  let seconds = hi.second - lo.second
-  let milliseconds = hi.millisecond - lo.millisecond
+export function preciseDiff(aParts: DateParts, bParts: DateParts, dimPrev: number): PreciseDiffResult {
+  // Always compute |b - a| treating the larger as upper. Caller orders args.
+  let years = bParts.year - aParts.year
+  let months = bParts.month - aParts.month
+  let days = bParts.date - aParts.date
+  let hours = bParts.hour - aParts.hour
+  let minutes = bParts.minute - aParts.minute
+  let seconds = bParts.second - aParts.second
+  let milliseconds = bParts.millisecond - aParts.millisecond
 
   if (milliseconds < 0) {
     milliseconds += 1000
@@ -154,7 +143,7 @@ export function preciseDiff(
     days--
   }
   if (days < 0) {
-    days += dim
+    days += dimPrev
     months--
   }
   if (months < 0) {
@@ -170,7 +159,7 @@ export function preciseDiff(
     minutes,
     seconds,
     milliseconds,
-    humanize(): string {
+    humanize(maxParts = 3): string {
       const parts: string[] = []
       if (years > 0) parts.push(pluralize(years, 'year'))
       if (months > 0) parts.push(pluralize(months, 'month'))
@@ -178,20 +167,20 @@ export function preciseDiff(
       if (hours > 0) parts.push(pluralize(hours, 'hour'))
       if (minutes > 0) parts.push(pluralize(minutes, 'minute'))
       if (seconds > 0) parts.push(pluralize(seconds, 'second'))
-      return parts.slice(0, 3).join(', ') || 'just now'
+      return parts.slice(0, maxParts).join(', ') || 'just now'
     }
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// age — calendar age from a birthdate
+// Age (calendar) — wrapper over preciseDiff.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function age(diffResult: PreciseDiffResult): AgeResult {
+export function age(diff: PreciseDiffResult): AgeResult {
   return {
-    years: diffResult.years,
-    months: diffResult.months,
-    days: diffResult.days,
+    years: diff.years,
+    months: diff.months,
+    days: diff.days,
     toString(): string {
       const parts: string[] = []
       if (this.years > 0) parts.push(`${this.years}y`)
@@ -203,7 +192,7 @@ export function age(diffResult: PreciseDiffResult): AgeResult {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// countdown — time remaining to a target
+// Countdown — time remaining to a target instant.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function countdown(targetMs: number, nowMs: number): CountdownResult {
@@ -211,11 +200,11 @@ export function countdown(targetMs: number, nowMs: number): CountdownResult {
   const isPast = total < 0
   const abs = Math.abs(total)
 
-  const days = Math.floor(abs / 864e5)
-  const hours = Math.floor((abs % 864e5) / 36e5)
-  const minutes = Math.floor((abs % 36e5) / 6e4)
-  const seconds = Math.floor((abs % 6e4) / 1e3)
-  const milliseconds = Math.floor(abs % 1e3)
+  const days = Math.floor(abs / DAY)
+  const hours = Math.floor((abs % DAY) / HOUR)
+  const minutes = Math.floor((abs % HOUR) / MIN)
+  const seconds = Math.floor((abs % MIN) / SEC)
+  const milliseconds = Math.floor(abs % SEC)
 
   return {
     days,
@@ -235,6 +224,7 @@ export function countdown(targetMs: number, nowMs: number): CountdownResult {
         .replace(/m/g, String(minutes))
         .replace(/ss/g, pad(seconds))
         .replace(/s/g, String(seconds))
+        .replace(/SSS/g, pad(milliseconds, 3))
     },
     humanize(): string {
       if (isPast) return 'already passed'

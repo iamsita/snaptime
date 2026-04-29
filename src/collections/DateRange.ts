@@ -1,61 +1,85 @@
-import type { RangeIterateUnit, Unit, DateInput } from '../core/types'
-import DateFormat from '../core/DateFormat'
+import type { DateInput, RangeIterateUnit, UnitInput } from '../core/types'
+import DateTime from '../core/DateTime'
 import Duration from '../core/Duration'
 
-function toDF(input: DateInput): DateFormat {
-  return input instanceof DateFormat ? input : new DateFormat(input as string | number | Date)
+function toDT(input: DateInput): DateTime {
+  return input instanceof DateTime ? input : new DateTime(input)
 }
 
+/**
+ * An immutable, closed time range [start, end].
+ *
+ * Distinct from {@link DatePeriod}, which adds a step. A DateRange is just
+ * "the span of time between two instants" with set-algebra operations.
+ */
 export default class DateRange {
-  readonly start: DateFormat
-  readonly end: DateFormat
+  readonly start: DateTime
+  readonly end: DateTime
 
   constructor(start: DateInput, end: DateInput) {
-    this.start = toDF(start)
-    this.end = toDF(end)
+    this.start = toDT(start)
+    this.end = toDT(end)
   }
+
+  // ── Static factories ─────────────────────────────────────────────────────
+
+  /** A one-millisecond range from the same start to itself. */
+  static point(at: DateInput): DateRange {
+    return new DateRange(at, at)
+  }
+
+  static fromDuration(start: DateInput, duration: Duration): DateRange {
+    const s = toDT(start)
+    return new DateRange(s, new DateTime(s.valueOf() + duration.toMilliseconds()))
+  }
+
+  // ── Inspection ───────────────────────────────────────────────────────────
 
   isValid(): boolean {
     return this.start.isValid() && this.end.isValid()
   }
 
-  /** True when start <= end */
+  /** True when start <= end. */
   isForward(): boolean {
     return this.start.valueOf() <= this.end.valueOf()
   }
 
-  /** Absolute duration between start and end */
+  isEmpty(): boolean {
+    return this.start.valueOf() === this.end.valueOf()
+  }
+
   duration(): Duration {
     return new Duration(Math.abs(this.end.valueOf() - this.start.valueOf()))
   }
 
-  /** True if the given date falls within the range (inclusive by default) */
+  /** Length in `unit` (fractional). */
+  length(unit: UnitInput = 'millisecond'): number {
+    return this.duration().as(unit)
+  }
+
+  // ── Set-algebra ──────────────────────────────────────────────────────────
+
   contains(date: DateInput, inclusive = true): boolean {
-    const t = toDF(date).valueOf()
-    const lo = Math.min(this.start.valueOf(), this.end.valueOf())
-    const hi = Math.max(this.start.valueOf(), this.end.valueOf())
+    const t = toDT(date).valueOf()
+    const [lo, hi] = this._normalized()
     return inclusive ? t >= lo && t <= hi : t > lo && t < hi
   }
 
-  /** True if this range temporally overlaps with another */
+  /** True if the two ranges share any instant. */
   overlaps(other: DateRange): boolean {
-    const [aStart, aEnd] = this._normalized()
-    const [bStart, bEnd] = other._normalized()
-    return aStart <= bEnd && aEnd >= bStart
+    const [as, ae] = this._normalized()
+    const [bs, be] = other._normalized()
+    return as <= be && ae >= bs
   }
 
-  /** Intersection, or null if they don't overlap */
   intersect(other: DateRange): DateRange | null {
     if (!this.overlaps(other)) return null
-    const [aStart, aEnd] = this._normalized()
-    const [bStart, bEnd] = other._normalized()
-    return new DateRange(
-      new DateFormat(Math.max(aStart, bStart)),
-      new DateFormat(Math.min(aEnd, bEnd))
-    )
+    const [as, ae] = this._normalized()
+    const [bs, be] = other._normalized()
+    return new DateRange(new DateTime(Math.max(as, bs)), new DateTime(Math.min(ae, be)))
   }
 
-  /** Union of two overlapping/adjacent ranges, or null if they don't overlap */
+  /** Union of overlapping/touching ranges, otherwise null. */
   merge(other: DateRange): DateRange | null {
     if (!this.overlaps(other)) return null
     const all = [
@@ -64,64 +88,78 @@ export default class DateRange {
       other.start.valueOf(),
       other.end.valueOf()
     ]
-    return new DateRange(new DateFormat(Math.min(...all)), new DateFormat(Math.max(...all)))
+    return new DateRange(new DateTime(Math.min(...all)), new DateTime(Math.max(...all)))
   }
 
-  /** Split range into chunks of n units */
-  split(n: number, unit: RangeIterateUnit): DateRange[] {
-    const result: DateRange[] = []
-    const lo = Math.min(this.start.valueOf(), this.end.valueOf())
-    const hi = Math.max(this.start.valueOf(), this.end.valueOf())
-    let cursor = new DateFormat(lo)
+  /** Subtract `other` from `this`. Returns 0/1/2 ranges. */
+  subtract(other: DateRange): DateRange[] {
+    const [as, ae] = this._normalized()
+    const [bs, be] = other._normalized()
+    if (be <= as || bs >= ae) return [new DateRange(new DateTime(as), new DateTime(ae))]
+    const out: DateRange[] = []
+    if (bs > as) out.push(new DateRange(new DateTime(as), new DateTime(bs)))
+    if (be < ae) out.push(new DateRange(new DateTime(be), new DateTime(ae)))
+    return out
+  }
 
+  /** Symmetric difference: parts that belong to exactly one range. */
+  difference(other: DateRange): DateRange[] {
+    return [...this.subtract(other), ...other.subtract(this)]
+  }
+
+  // ── Iteration / splitting ────────────────────────────────────────────────
+
+  /** Split into N equal sub-ranges by `unit` step. */
+  split(n: number, unit: RangeIterateUnit): DateRange[] {
+    const out: DateRange[] = []
+    const [lo, hi] = this._normalized()
+    let cursor = new DateTime(lo)
+    const hiDT = new DateTime(hi)
     while (cursor.valueOf() < hi) {
-      const next = cursor.add(n, unit as Unit)
-      const chunkEnd = next.valueOf() > hi ? new DateFormat(hi) : next
-      result.push(new DateRange(cursor, chunkEnd))
+      const next = cursor.add(n, unit)
+      const chunkEnd = next.valueOf() > hi ? hiDT : next
+      out.push(new DateRange(cursor, chunkEnd))
       cursor = next
     }
-
-    return result
+    return out
   }
 
-  /** Generator that yields each date stepping by 1 unit */
-  *iterate(unit: RangeIterateUnit): Generator<DateFormat> {
-    const lo = Math.min(this.start.valueOf(), this.end.valueOf())
-    const hi = Math.max(this.start.valueOf(), this.end.valueOf())
-    let cursor = new DateFormat(lo)
-
+  /** Yield each step. */
+  *iterate(unit: RangeIterateUnit, step = 1): Generator<DateTime> {
+    const [lo, hi] = this._normalized()
+    let cursor = new DateTime(lo)
     while (cursor.valueOf() <= hi) {
       yield cursor
-      cursor = cursor.add(1, unit as Unit)
+      cursor = cursor.add(step, unit)
     }
   }
 
-  /** Collect all dates from iterate() into an array */
-  toArray(unit: RangeIterateUnit): DateFormat[] {
-    return [...this.iterate(unit)]
+  toArray(unit: RangeIterateUnit, step = 1): DateTime[] {
+    return [...this.iterate(unit, step)]
   }
 
-  /** "Jan 1 - Mar 31, 2026" style label */
+  // ── Display ──────────────────────────────────────────────────────────────
+
   humanize(): string {
-    const startYear = this.start.get('year')
-    const endYear = this.end.get('year')
-    if (startYear === endYear) {
-      return `${this.start.format('MMM D')} \u2013 ${this.end.format('MMM D, YYYY')}`
+    if (this.start.get('year') === this.end.get('year')) {
+      return `${this.start.format('MMM D')} – ${this.end.format('MMM D, YYYY')}`
     }
-    return `${this.start.format('MMM D, YYYY')} \u2013 ${this.end.format('MMM D, YYYY')}`
+    return `${this.start.format('MMM D, YYYY')} – ${this.end.format('MMM D, YYYY')}`
   }
 
   equals(other: DateRange): boolean {
-    return (
-      this.start.valueOf() === other.start.valueOf() && this.end.valueOf() === other.end.valueOf()
-    )
+    return this.start.eq(other.start) && this.end.eq(other.end)
   }
 
   toString(): string {
-    return `${this.start.format('YYYY-MM-DD')} / ${this.end.format('YYYY-MM-DD')}`
+    return `${this.start.format('YYYY-MM-DD')}/${this.end.format('YYYY-MM-DD')}`
   }
 
-  // ── Private ─────────────────────────────────────────────────────────────
+  toJSON(): { start: string; end: string } {
+    return { start: this.start.toISOString(), end: this.end.toISOString() }
+  }
+
+  // ── Internal ─────────────────────────────────────────────────────────────
 
   private _normalized(): [number, number] {
     const a = this.start.valueOf()

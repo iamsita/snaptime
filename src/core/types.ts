@@ -1,8 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Core time units
+// Core public types for the library.
+// All other modules import from here. Keep this file dependency-free.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** All supported canonical time units */
+import type DateTime from './DateTime'
+
+// ── Time units ──────────────────────────────────────────────────────────────
+
 export type Unit =
   | 'millisecond'
   | 'second'
@@ -10,16 +14,15 @@ export type Unit =
   | 'hour'
   | 'day'
   | 'date'
-  | 'month'
-  | 'year'
-  | 'fortnight'
-  | 'unknown'
   | 'week'
+  | 'fortnight'
+  | 'month'
+  | 'quarter'
+  | 'year'
+  | 'decade'
+  | 'century'
+  | 'millennium'
 
-/**
- * Accepted unit input — canonical units plus common aliases.
- * Resolved to a canonical Unit via resolveUnit().
- */
 export type UnitInput =
   | Unit
   | 'ms'
@@ -38,37 +41,79 @@ export type UnitInput =
   | 'weeks'
   | 'M'
   | 'months'
+  | 'Q'
+  | 'quarters'
   | 'y'
   | 'years'
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Date input — the universal input type accepted by most APIs
-// ─────────────────────────────────────────────────────────────────────────────
+/** Units valid for arithmetic (add/subtract). */
+export type ArithmeticUnit = Exclude<Unit, 'date' | 'fortnight'>
+
+/** Units valid for startOf/endOf. */
+export type BoundaryUnit =
+  | 'year'
+  | 'quarter'
+  | 'month'
+  | 'week'
+  | 'isoWeek'
+  | 'day'
+  | 'date'
+  | 'hour'
+  | 'minute'
+  | 'second'
+  | 'millisecond'
+
+/** Iso/locale weekday — 0=Sunday in JS Date, but we expose 1=Monday for ISO. */
+export type Weekday = 0 | 1 | 2 | 3 | 4 | 5 | 6
+
+// ── Date inputs ─────────────────────────────────────────────────────────────
 
 /**
- * Any value that can be converted to a DateFormat instance.
- * Use this instead of repeating `string | number | Date | DateFormat` everywhere.
+ * Anything that has been seen by the library: a primitive timestamp, a string,
+ * a native Date, or another DateTime. Functions accepting a `DateInput`
+ * normalize via `toDateTime()`.
  */
-// Forward-reference friendly: DateFormat is checked via duck-typing at runtime
-export interface DateFormatLike {
+export type DateInput = string | number | Date | DateTimeLike
+
+/**
+ * Structural type for DateTime — used in pure modules that must avoid a
+ * circular import on the DateTime class itself. Anything that walks like a
+ * DateTime is treated as one.
+ */
+export interface DateTimeLike {
   valueOf(): number
   isValid(): boolean
-  get(u: Unit | 'day'): number
+  isUtc(): boolean
+  get(unit: Unit | 'day'): number
+  clone(): DateTimeLike
+  toDate(): Date
 }
 
-export type DateInput = string | number | Date | DateFormatLike
+export interface DateObject {
+  year: number
+  month?: number
+  day?: number
+  hour?: number
+  minute?: number
+  second?: number
+  millisecond?: number
+}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared primitive types
-// ─────────────────────────────────────────────────────────────────────────────
+export interface CreateOptions {
+  /** Treat the input as a UTC instant rather than local-time. */
+  utc?: boolean
+  /** Locale name to attach to this instance (overrides global default). */
+  locale?: string
+}
+
+// ── Comparison / range ──────────────────────────────────────────────────────
 
 export type SortOrder = 'asc' | 'desc'
-export type WeekStart = 'sunday' | 'monday'
+export type WeekStart = 'sunday' | 'monday' | 'saturday'
 
-/** Inclusivity for isBetween: '()' exclusive, '[]' inclusive, '[)' start-inclusive, '(]' end-inclusive */
+/** Boundary inclusivity for `isBetween`. */
 export type Inclusivity = '()' | '[]' | '[)' | '(]'
 
-/** Units usable for range iteration and splitting */
 export type RangeIterateUnit =
   | 'millisecond'
   | 'second'
@@ -77,25 +122,19 @@ export type RangeIterateUnit =
   | 'day'
   | 'week'
   | 'month'
+  | 'quarter'
   | 'year'
 
-/** Units usable for grouping a DateCollection */
-export type GroupByUnit = 'year' | 'month' | 'week' | 'day' | 'hour' | 'quarter'
-
-/** Units usable for deduplicating a DateCollection */
+export type GroupByUnit = 'year' | 'quarter' | 'month' | 'week' | 'day' | 'hour'
 export type UniqueUnit = 'year' | 'month' | 'week' | 'day' | 'hour' | 'minute' | 'second'
 
-/** Supported built-in holiday calendars */
-export type HolidayCountry = 'US' | 'UK' | 'IN' | 'DE' | 'FR' | 'CA' | 'AU'
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Locale
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Locale ──────────────────────────────────────────────────────────────────
 
 export interface LocaleRelativeTime {
   future: string
   past: string
   s: string
+  ss?: string
   m: string
   mm: string
   h: string
@@ -117,41 +156,36 @@ export interface LocaleCalendar {
   sameElse?: string
 }
 
+export interface LocaleLongDateFormats {
+  LT?: string
+  LTS?: string
+  L?: string
+  LL?: string
+  LLL?: string
+  LLLL?: string
+  l?: string
+  ll?: string
+  lll?: string
+  llll?: string
+}
+
 export interface LocaleData {
+  /** Locale code, e.g. "en", "fr", "ja". */
+  name?: string
   months?: string[]
   monthsShort?: string[]
   weekdays?: string[]
   weekdaysShort?: string[]
   weekdaysMin?: string[]
+  meridiem?: (hour: number, minute: number, isLower: boolean) => string
+  ordinal?: (n: number) => string
+  weekStart?: WeekStart
+  longDateFormat?: LocaleLongDateFormats
   relativeTime?: LocaleRelativeTime
   calendar?: LocaleCalendar
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Plugin system
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Plugin installer function.
- * Receives the DateFormat class as both arguments (constructor & prototype host).
- * Use declaration merging on DateFormatPluginMethods to extend the type.
- */
-export type PluginFn = (DF: unknown, inst: unknown) => void
-
-/**
- * Extend this interface via declaration merging to add types for plugin methods.
- * @example
- * declare module '@anilkumarthakur/d8' {
- *   interface DateFormatPluginMethods { myMethod(): string }
- * }
- */
-export interface DateFormatPluginMethods {
-  testPluginMethod?: () => string
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Diff / age
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Diff / age / countdown ──────────────────────────────────────────────────
 
 export interface PreciseDiffResult {
   years: number
@@ -161,21 +195,17 @@ export interface PreciseDiffResult {
   minutes: number
   seconds: number
   milliseconds: number
-  /** Human-readable string, e.g. "2 years, 3 months" */
-  humanize(): string
+  /** "2 years, 3 months" */
+  humanize(maxParts?: number): string
 }
 
 export interface AgeResult {
   years: number
   months: number
   days: number
-  /** e.g. "2y 3mo 5d" */
+  /** "32y 3mo 5d" */
   toString(): string
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Countdown
-// ─────────────────────────────────────────────────────────────────────────────
 
 export interface CountdownResult {
   days: number
@@ -183,25 +213,15 @@ export interface CountdownResult {
   minutes: number
   seconds: number
   milliseconds: number
-  /** Signed total milliseconds (negative if already past) */
+  /** Signed total ms — negative if target already passed. */
   total: number
   isPast: boolean
-  /**
-   * Replace tokens D, H, m, s (doubled = zero-padded) in a template.
-   * e.g. `format('DD [days] HH:mm:ss')`
-   */
   format(template: string): string
   humanize(): string
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Calendar grid
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Calendar grid ───────────────────────────────────────────────────────────
 
-/**
- * One cell in a month-view calendar grid.
- * D is DateFormat at runtime; generic to avoid circular imports in type.ts.
- */
 export interface CalendarCell<D = unknown> {
   date: D
   isCurrentMonth: boolean
@@ -213,49 +233,62 @@ export interface CalendarGridOptions {
   weekStart?: WeekStart
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Fiscal year
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Fiscal year ─────────────────────────────────────────────────────────────
 
 export interface FiscalConfig {
-  /** Month the fiscal year starts: 1-12 (default 1 = January) */
+  /** 1-12 — month the fiscal year begins. */
   startMonth: number
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Date object input (for DateFormat.fromObject)
-// ─────────────────────────────────────────────────────────────────────────────
-
-export interface DateObject {
-  year: number
-  month?: number
-  day?: number
-  hour?: number
-  minute?: number
-  second?: number
-  millisecond?: number
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Cron internals
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Cron ────────────────────────────────────────────────────────────────────
 
 export interface CronField {
   values: Set<number>
   any: boolean
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Factory static interface
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Holidays ────────────────────────────────────────────────────────────────
 
-export interface DateFormatStatic {
-  (input?: DateInput, opts?: { utc?: boolean }): DateFormatLike
-  parse(str: string, fmt: string, strict?: boolean): DateFormatLike
-  min(...args: DateInput[]): DateFormatLike
-  max(...args: DateInput[]): DateFormatLike
-  duration(n: number, unit: UnitInput): unknown
-  locale(name: string, data?: LocaleData): void
-  use(plugin: PluginFn): unknown
-  fromObject(obj: DateObject, opts?: { utc?: boolean }): DateFormatLike
+export type HolidayCountry =
+  | 'US'
+  | 'UK'
+  | 'IN'
+  | 'DE'
+  | 'FR'
+  | 'CA'
+  | 'AU'
+  | 'JP'
+  | 'NZ'
+  | 'IT'
+  | 'ES'
+  | 'BR'
+  | 'NP'
+
+// ── Plugins / macros ────────────────────────────────────────────────────────
+
+/**
+ * A plugin receives the DateTime constructor and may register macros, locales,
+ * or any other side effects. Plugins are called once at registration time.
+ */
+export type PluginFn<O = unknown> = (DT: typeof DateTime, options?: O) => void
+
+/** A user-defined instance method. `this` is bound to the DateTime instance. */
+export type Macro = (this: DateTime, ...args: unknown[]) => unknown
+
+/** A user-defined static method. */
+export type StaticMacro = (...args: unknown[]) => unknown
+
+/**
+ * Augment this interface via declaration merging to give types to your macros.
+ *
+ * @example
+ *   declare module '@anilkumarthakur/d8' {
+ *     interface DateTimePluginMethods {
+ *       greet(): string
+ *     }
+ *   }
+ */
+export interface DateTimePluginMethods {
+  // Intentionally empty — extended by users.
+  [key: string]: unknown
 }
